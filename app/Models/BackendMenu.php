@@ -3,8 +3,22 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class BackendMenu extends Model
 {
-    protected $table = 'backend_menus';
+    use HasFactory;
+    
+    protected $table = 'backend_menu';
+    
+    protected $fillable = [
+        'name',
+        'link',
+        'icon',
+        'parent_id',
+        'priority',
+        'status'
+    ];
+    
+    public $timestamps = false;
 }

@@ -30,6 +30,8 @@ class BackendMenuComposer
     private function menuTree(array $nodes, array $blockNodes = null)
     {
         $tree = [];
+        $user = auth()->user();
+        
         foreach ($nodes as $id => $node) {
             if (isset($node['link']) && !isset($blockNodes[$node['link']])) {
 
@@ -37,7 +39,8 @@ class BackendMenuComposer
                     continue;
                 }
 
-                if (($node['link'] != '#') && !blank(auth()->user()) && !auth()->user()->can($node['link'])) {
+                // Verificar permisos solo si el usuario está autenticado
+                if (($node['link'] != '#') && $user && !$user->can($node['link'])) {
                     continue;
                 }
 
