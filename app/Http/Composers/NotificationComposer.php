@@ -11,9 +11,25 @@ class NotificationComposer
     public function compose(View $view)
     {
         $latestVisitors = [];
-        if(auth()->user()->myrole == 2){
-            $latestVisitors = VisitingDetails::where('status', VisitorStatus::PENDDING)->where(['employee_id' => auth()->user()->employee->id])->orderBy('id', 'desc')->get();
+        
+        // Verificar que el usuario esté autenticado
+        $user = auth()->user();
+        if (!$user) {
+            $view->with('latestVisitors', $latestVisitors);
+            return;
         }
+        
+        // Verificar que el usuario tenga un rol y que sea el rol 2 (Employee)
+        if (isset($user->myrole) && $user->myrole == 2) {
+            // Verificar que el usuario tenga un empleado asociado
+            if ($user->employee) {
+                $latestVisitors = VisitingDetails::where('status', VisitorStatus::PENDDING)
+                    ->where(['employee_id' => $user->employee->id])
+                    ->orderBy('id', 'desc')
+                    ->get();
+            }
+        }
+        
         $view->with('latestVisitors', $latestVisitors);
     }
 }
