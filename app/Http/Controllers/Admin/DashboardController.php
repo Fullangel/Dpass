@@ -21,24 +21,80 @@ class DashboardController extends BackendController
     }
     public function index()
     {
-        if (auth()->user()->getrole->name == 'Employee') {
-            $visitors       = VisitingDetails::where(['employee_id' => auth()->user()->employee->id])->orderBy('id', 'desc')->get();
+        // Verificar que el usuario esté autenticado y tenga un rol
+        if (!auth()->user() || !auth()->user()->getrole) {
+            // Si no hay usuario autenticado o no tiene rol, usar vista de administrador por defecto
+            $visitors       = VisitingDetails::orderBy('id', 'desc')->get();
+            $preregister    = PreRegister::orderBy('id', 'desc')->get();
+            $employees      = Employee::orderBy('id', 'desc')->get();
             
-            $visitors_check_in = VisitingDetails::where(['employee_id' => auth()->user()->employee->id])
-                                                  ->where('checkin_at', '=', NULL)
+            $visitors_check_in = VisitingDetails::where('checkin_at', '=', NULL)
                                                   ->where('checkout_at','=', NULL)
                                                   ->count();
                                                   
-            $visitors_check_out = VisitingDetails::where(['employee_id' => auth()->user()->employee->id])
-                                                  ->where('checkin_at', '!=', NULL)
+            $visitors_check_out = VisitingDetails::where('checkin_at', '!=', NULL)
                                                   ->where('checkout_at','!=', NULL)
                                                   ->count();
                                                   
-            $visitors_in = VisitingDetails::where(['employee_id' => auth()->user()->employee->id])
-                                                  ->where('status', '=', 2)
+            $visitors_in = VisitingDetails::where('status', '=', 2)
+                                                  ->where('checkout_at','=', NULL)
                                                   ->count();                                                  
+
+            $totalEmployees = count($employees);
+            $totalVisitor   = count($visitors);
+            $totalPrerigister = count($preregister);
             
-            $preregister    = PreRegister::where(['employee_id' => auth()->user()->employee->id])->orderBy('id', 'desc')->get();
+            $attendance = null;
+            if (auth()->user()) {
+                $attendance = Attendance::where(['user_id' => auth()->user()->id, 'date' => date('Y-m-d')])->first();
+            }
+            
+            $this->data['attendance']    = $attendance;
+            $this->data['totalVisitor']    = $totalVisitor;
+            $this->data['totalEmployees'] = $totalEmployees;
+            $this->data['totalPrerigister']     = $totalPrerigister;
+            $this->data['visitors']  = $visitors;
+            $this->data['visitors_in']  = $visitors_in;
+            $this->data['visitors_out']  = $visitors_check_out;
+            $this->data['visitors_standby']  = $visitors_check_in;
+            
+            return view('admin.dashboard.index', $this->data);
+        }
+        
+        if (auth()->user()->getrole->name == 'Employee') {
+            // Verificar si el usuario tiene un empleado asociado
+            $employeeId = null;
+            if (auth()->user()->employee) {
+                $employeeId = auth()->user()->employee->id;
+            }
+            
+            // Si no hay empleado asociado, inicializar con valores vacíos
+            if ($employeeId) {
+                $visitors       = VisitingDetails::where(['employee_id' => $employeeId])->orderBy('id', 'desc')->get();
+                
+                $visitors_check_in = VisitingDetails::where(['employee_id' => $employeeId])
+                                                      ->where('checkin_at', '=', NULL)
+                                                      ->where('checkout_at','=', NULL)
+                                                      ->count();
+                                                      
+                $visitors_check_out = VisitingDetails::where(['employee_id' => $employeeId])
+                                                      ->where('checkin_at', '!=', NULL)
+                                                      ->where('checkout_at','!=', NULL)
+                                                      ->count();
+                                                      
+                $visitors_in = VisitingDetails::where(['employee_id' => $employeeId])
+                                                      ->where('status', '=', 2)
+                                                      ->count();                                                  
+                
+                $preregister = PreRegister::where(['employee_id' => $employeeId])->orderBy('id', 'desc')->get();
+            } else {
+                $visitors = collect(); // Colección vacía
+                $visitors_check_in = 0;
+                $visitors_check_out = 0;
+                $visitors_in = 0;
+                $preregister = collect(); // Colección vacía
+            }
+            
             $totalEmployees = 0;
         } else {
             $visitors       = VisitingDetails::orderBy('id', 'desc')->get();
@@ -63,7 +119,10 @@ class DashboardController extends BackendController
         $totalVisitor   = count($visitors);
         $totalPrerigister = count($preregister);
         
-        $attendance = Attendance::where(['user_id' => auth()->user()->id, 'date' => date('Y-m-d')])->first();
+        $attendance = null;
+        if (auth()->user()) {
+            $attendance = Attendance::where(['user_id' => auth()->user()->id, 'date' => date('Y-m-d')])->first();
+        }
         $this->data['attendance']    = $attendance;
         $this->data['totalVisitor']    = $totalVisitor;
         $this->data['totalEmployees'] = $totalEmployees;
