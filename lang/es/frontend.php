@@ -1,0 +1,28 @@
+<?php
+
+return array (
+  'check_in' => 'Registrese Aqui!',
+  'scan_qr' => 'Escanear QR',
+  'email' => 'Correo Electrónico',
+  'go_to_dashboard' => 'Tablero',
+  'login' => 'Iniciar Sesión',
+  'have_appoinment' => 'Estoy Pre-Registrado',
+  'been_here_before' => 'He venido antes',
+  'return_visitor_details' => 'Datos de su Visita Anterior',
+  'visitor_email_phone' => 'Correo Electrónico, Teléfono o CI del Visitante',
+  'search_email' => 'Buscar correo electrónico...',
+  'terms_and_conditions' => 'Términos y Condiciones',
+  'search_email_or_phone' => 'Buscar correo electrónico, teléfono o CI...',
+  'cancel' => 'Cancelar',
+  'continue' => 'Continuar',
+  'pre_registered_visitor_details' => 'Detalles del Visitante Pre-Registrado',
+  'check_out' => 'Registro de Salida',
+  'check_out_visitor_details' => 'Detalles del Visitante al Salir',
+  'visitor_id' => 'CI del Visitante',
+  'search_visitor_id' => 'Buscar CI del visitante...',
+  'you_have_already_checked_out_successfully' => 'Ya has realizado el registro de salida con éxito',
+  'id_not_available' => 'CI No Disponible',
+  'visitor_details' => 'Detalles del Visitante',
+  'checkout-visitor' => 'Registrar Salida del Visitante',
+  'tearms_conditons' => 'Términos y Condiciones',
+);

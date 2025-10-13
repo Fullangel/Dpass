@@ -1,0 +1,32 @@
+<?php
+
+return array (
+  'employees' => 'Funcionario',
+  'add_employee' => 'Agregar Funcionario',
+  'joining_date' => 'Fecha de Ingreso',
+  'first_name' => 'Nombre',
+  'last_name' => 'Apellido',
+  'email_address' => 'Dirección de Correo Electrónico',
+  'phone' => 'Teléfono',
+  'gender' => 'Género',
+  'department' => 'Gerencia',
+  'password' => 'Contraseña',
+  'confirm_password' => 'Confirmar Contraseña',
+  'about' => 'Acerca de',
+  'designation' => 'Designación',
+  'image' => 'Imagen',
+  'choose_file' => 'Seleccionar archivo',
+  'submit' => 'Enviar',
+  'update' => 'Actualizar',
+  'name' => 'Nombre',
+  'email' => 'Correo Electrónico',
+  'status' => 'Estado',
+  'visitors' => 'Visitantes',
+  'pre_registers' => 'Pre-registros',
+  'checkin' => 'Registro de Entrada',
+  'expected_date' => 'Fecha Esperada',
+  'expected_time' => 'Hora Esperada',
+  'expected_Date' => 'Fecha Esperada',
+  'download' => 'Descargar Código QR',
+);
+

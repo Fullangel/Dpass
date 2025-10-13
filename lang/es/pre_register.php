@@ -1,0 +1,26 @@
+<?php
+
+return array (
+  'pre_register' => 'Pre-registros',
+  'add_Pre_register' => 'Agregar Pre-registro',
+  'employee' => 'Empleado',
+  'expected_date' => 'Fecha Esperada',
+  'expected_time' => 'Hora Esperada',
+  'first_name' => 'Nombre',
+  'last_name' => 'Apellido',
+  'email_address' => 'Dirección de Correo Electrónico',
+  'phone' => 'Teléfono',
+  'gender' => 'Categoria',
+  'department' => 'Departamento',
+  'password' => 'Contraseña',
+  'confirm_password' => 'Confirmar Contraseña',
+  'about' => 'Acerca de',
+  'designation' => 'Designación',
+  'image' => 'Imagen',
+  'choose_file' => 'Seleccionar archivo',
+  'submit' => 'Enviar',
+  'update' => 'Actualizar',
+  'select_employee' => 'Seleccionar Funcionario',
+  'comment' => 'Comentario',
+  'address' => 'Dirección',
+);
