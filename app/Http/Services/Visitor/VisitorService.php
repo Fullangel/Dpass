@@ -23,16 +23,28 @@ class VisitorService
 
     public function all()
     {
-        if (auth()->user()->getrole->name == 'Employee') {
-            return VisitingDetails::with('visitor','employee')->where(['employee_id' => auth()->user()->employee->id])->orderBy('id', 'desc')->get();
+        $user = auth()->user();
+        
+        if (!$user || !$user->getrole || !$user->employee) {
+            return VisitingDetails::with('visitor','employee')->orderBy('id', 'desc')->get();
+        }
+        
+        if ($user->getrole->name == 'Employee') {
+            return VisitingDetails::with('visitor','employee')->where(['employee_id' => $user->employee->id])->orderBy('id', 'desc')->get();
         } else {
             return VisitingDetails::with('visitor','employee')->orderBy('id', 'desc')->get();
         }
     }
     public function take($number)
     {
-        if (auth()->user()->getrole->name == 'Employee') {
-            return VisitingDetails::with('visitor','employee')->where(['employee_id' => auth()->user()->employee->id])->orderBy('id', 'desc')->take($number)->get();
+        $user = auth()->user();
+        
+        if (!$user || !$user->getrole || !$user->employee) {
+            return VisitingDetails::with('visitor','employee')->orderBy('id', 'desc')->take($number)->get();
+        }
+        
+        if ($user->getrole->name == 'Employee') {
+            return VisitingDetails::with('visitor','employee')->where(['employee_id' => $user->employee->id])->orderBy('id', 'desc')->take($number)->get();
         } else {
             return VisitingDetails::with('visitor','employee')->orderBy('id', 'desc')->take($number)->get();
         }
@@ -44,8 +56,14 @@ class VisitorService
      */
     public function find($id)
     {
-        if (auth()->user()->getrole->name == 'Employee') {
-            return VisitingDetails::where(['id' => $id, 'employee_id' => auth()->user()->employee->id])->first();
+        $user = auth()->user();
+        
+        if (!$user || !$user->getrole || !$user->employee) {
+            return VisitingDetails::find($id);
+        }
+        
+        if ($user->getrole->name == 'Employee') {
+            return VisitingDetails::where(['id' => $id, 'employee_id' => $user->employee->id])->first();
         } else {
             return VisitingDetails::find($id);
         }
