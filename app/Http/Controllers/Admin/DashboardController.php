@@ -22,7 +22,8 @@ class DashboardController extends BackendController
     public function index()
     {
         // Verificar que el usuario esté autenticado y tenga un rol
-        if (!auth()->user() || !auth()->user()->getrole) {
+        $user = auth()->user();
+        if (!$user || !$user->getrole) {
             // Si no hay usuario autenticado o no tiene rol, usar vista de administrador por defecto
             $visitors       = VisitingDetails::orderBy('id', 'desc')->get();
             $preregister    = PreRegister::orderBy('id', 'desc')->get();
@@ -45,8 +46,8 @@ class DashboardController extends BackendController
             $totalPrerigister = count($preregister);
             
             $attendance = null;
-            if (auth()->user()) {
-                $attendance = Attendance::where(['user_id' => auth()->user()->id, 'date' => date('Y-m-d')])->first();
+            if ($user) {
+                $attendance = Attendance::where(['user_id' => $user->id, 'date' => date('Y-m-d')])->first();
             }
             
             $this->data['attendance']    = $attendance;
@@ -61,7 +62,48 @@ class DashboardController extends BackendController
             return view('admin.dashboard.index', $this->data);
         }
         
-        if (auth()->user()->getrole->name == 'Employee') {
+        // Verificar si el rol existe antes de acceder a su nombre
+        $userRole = $user->getrole;
+        if (!$userRole || !isset($userRole->name)) {
+            // Si no hay rol o nombre de rol, usar vista de administrador por defecto
+            $visitors       = VisitingDetails::orderBy('id', 'desc')->get();
+            $preregister    = PreRegister::orderBy('id', 'desc')->get();
+            $employees      = Employee::orderBy('id', 'desc')->get();
+            
+            $visitors_check_in = VisitingDetails::where('checkin_at', '=', NULL)
+                                                  ->where('checkout_at','=', NULL)
+                                                  ->count();
+                                                  
+            $visitors_check_out = VisitingDetails::where('checkin_at', '!=', NULL)
+                                                  ->where('checkout_at','!=', NULL)
+                                                  ->count();
+                                                  
+            $visitors_in = VisitingDetails::where('status', '=', 2)
+                                                  ->where('checkout_at','=', NULL)
+                                                  ->count();                                                  
+
+            $totalEmployees = count($employees);
+            $totalVisitor   = count($visitors);
+            $totalPrerigister = count($preregister);
+            
+            $attendance = null;
+            if ($user) {
+                $attendance = Attendance::where(['user_id' => $user->id, 'date' => date('Y-m-d')])->first();
+            }
+            
+            $this->data['attendance']    = $attendance;
+            $this->data['totalVisitor']    = $totalVisitor;
+            $this->data['totalEmployees'] = $totalEmployees;
+            $this->data['totalPrerigister']     = $totalPrerigister;
+            $this->data['visitors']  = $visitors;
+            $this->data['visitors_in']  = $visitors_in;
+            $this->data['visitors_out']  = $visitors_check_out;
+            $this->data['visitors_standby']  = $visitors_check_in;
+            
+            return view('admin.dashboard.index', $this->data);
+        }
+        
+        if ($userRole->name == 'Employee') {
             // Verificar si el usuario tiene un empleado asociado
             $employeeId = null;
             if (auth()->user()->employee) {
@@ -120,8 +162,8 @@ class DashboardController extends BackendController
         $totalPrerigister = count($preregister);
         
         $attendance = null;
-        if (auth()->user()) {
-            $attendance = Attendance::where(['user_id' => auth()->user()->id, 'date' => date('Y-m-d')])->first();
+        if ($user) {
+            $attendance = Attendance::where(['user_id' => $user->id, 'date' => date('Y-m-d')])->first();
         }
         $this->data['attendance']    = $attendance;
         $this->data['totalVisitor']    = $totalVisitor;
