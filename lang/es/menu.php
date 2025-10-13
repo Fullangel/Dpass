@@ -3,6 +3,7 @@
 return array (
   'dashboard' => 'Tablero',
   'profile' => 'Mi Perfil',
+  'regions' => 'Regiones',
   'departments' => 'Departamentos',
   'designations' => 'Cargos',
   'employees' => 'Funcionarios',

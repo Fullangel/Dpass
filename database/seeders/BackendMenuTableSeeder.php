@@ -36,6 +36,14 @@ class BackendMenuTableSeeder extends Seeder
                 'status'    => 1,
             ],
             [
+                'name'      => 'regions',
+                'link'      => 'regions',
+                'icon'      => 'fas fa-map',
+                'parent_id' => 0,
+                'priority'  => 8850,
+                'status'    => 1,
+            ],
+            [
                 'name'      => 'departments',
                 'link'      => 'departments',
                 'icon'      => 'fas fa-building',

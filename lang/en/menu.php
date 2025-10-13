@@ -3,6 +3,7 @@
 return array (
   'dashboard' => 'Dashboard',
   'profile' => 'Profile',
+  'regions' => 'Regions',
   'departments' => 'Departments',
   'designations' => 'Designations',
   'employees' => 'Employees',

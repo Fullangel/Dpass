@@ -19,6 +19,7 @@ use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\DepartmentsController;
+use App\Http\Controllers\Admin\RegionController;
 use App\Http\Controllers\Admin\PreRegisterController;
 use App\Http\Controllers\Admin\DesignationsController;
 use App\Http\Controllers\Admin\LocalizationController;
@@ -65,6 +66,10 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'installed', 'backen
     //departments
     Route::resource('departments', DepartmentsController::class);
     Route::get('get-departments', [DepartmentsController::class, 'getDepartments'])->name('departments.get-departments');
+
+    //regions
+    Route::resource('regions', RegionController::class);
+    Route::get('get-regions', [RegionController::class, 'getRegions'])->name('regions.get-regions');
 
     //web-token
     Route::post('store-token', [WebNotificationController::class, 'store'])->name('store.token');
