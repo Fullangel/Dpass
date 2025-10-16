@@ -12,7 +12,7 @@
             <div class="row">
                 <div class="col-12">
                     <div class="card">
-                        @can('region-create')
+                        @can('regions_create')
                             <div class="card-header">
                                 <a href="{{ route('admin.regions.create') }}" class="btn btn-icon icon-left btn-primary"><i class="fas fa-plus"></i> {{ __('region.add_region') }}</a>
                             </div>
@@ -20,7 +20,7 @@
                         <div class="card-body">
 
                             <div class="table-responsive">
-                                <table class="table table-striped" id="maintable" data-url="{{ route('admin.regions.get-regions') }}" data-hidecolumn="{{ auth()->user()->can('region-edit') || auth()->user()->can('region-delete') }}">
+                                <table class="table table-striped" id="maintable" data-url="{{ route('admin.regions.get-regions') }}" data-hidecolumn="{{ auth()->user()->can('regions_edit') || auth()->user()->can('regions_delete') }}">
                                     <thead>
                                         <tr>
                                             <th>{{ __('levels.id') }}</th>

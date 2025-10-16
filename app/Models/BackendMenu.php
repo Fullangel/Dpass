@@ -9,7 +9,7 @@ class BackendMenu extends Model
 {
     use HasFactory;
     
-    protected $table = 'backend_menu';
+    protected $table = 'backend_menus';
     
     protected $fillable = [
         'name',

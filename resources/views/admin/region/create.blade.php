@@ -5,7 +5,7 @@
 	<section class="section">
         <div class="section-header">
             <h1>{{ __('menu.regions') }}</h1>
-            {{ Breadcrumbs::render('regions/add') }}
+            {{ Breadcrumbs::render('regions/create') }}
         </div>
 
         <div class="section-body">

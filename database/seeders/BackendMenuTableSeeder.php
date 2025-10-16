@@ -16,6 +16,7 @@ class BackendMenuTableSeeder extends Seeder
         $parent = [
             'report'         => 9,
             'administrators' => 13,
+            'regions'        => 3,
         ];
 
         $menus = [

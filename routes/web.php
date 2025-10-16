@@ -40,7 +40,7 @@ Route::group(['prefix' => 'install', 'as' => 'LaravelInstaller::', 'middleware' 
 });
 
 Route::redirect('/', '/admin/dashboard')->middleware('backend_permission');
-Route::redirect('/admin', '/DashboardControllermin/dashboard')->middleware('backend_permission');
+Route::redirect('/admin', '/admin/dashboard')->middleware('backend_permission');
 
 Route::group(['prefix' => 'admin', 'middleware' => ['installed'], 'namespace' => 'Admin', 'as' => 'admin.'], function () {
     Route::get('login', [LoginController::class, 'showLoginForm']);

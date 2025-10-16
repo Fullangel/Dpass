@@ -213,6 +213,26 @@ class PermissionTableSeeder extends Seeder
         $permissionArray[$i]['name']       = 'addons_delete';
         $permissionArray[$i]['guard_name'] = 'web';
 
+        $i++;
+        $permissionArray[$i]['name']       = 'regions';
+        $permissionArray[$i]['guard_name'] = 'web';
+
+        $i++;
+        $permissionArray[$i]['name']       = 'regions_create';
+        $permissionArray[$i]['guard_name'] = 'web';
+
+        $i++;
+        $permissionArray[$i]['name']       = 'regions_edit';
+        $permissionArray[$i]['guard_name'] = 'web';
+
+        $i++;
+        $permissionArray[$i]['name']       = 'regions_delete';
+        $permissionArray[$i]['guard_name'] = 'web';
+
+        $i++;
+        $permissionArray[$i]['name']       = 'regions_show';
+        $permissionArray[$i]['guard_name'] = 'web';
+
         Permission::insert($permissionArray);
     }
 }

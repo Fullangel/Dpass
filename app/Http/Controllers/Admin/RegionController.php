@@ -14,10 +14,10 @@ class RegionController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('permission:region-list|region-create|region-edit|region-delete', ['only' => ['index', 'getRegions']]);
-        $this->middleware('permission:region-create', ['only' => ['create', 'store']]);
-        $this->middleware('permission:region-edit', ['only' => ['edit', 'update']]);
-        $this->middleware('permission:region-delete', ['only' => ['destroy']]);
+        $this->middleware('permission:regions|regions_create|regions_edit|regions_delete', ['only' => ['index', 'getRegions']]);
+        $this->middleware('permission:regions_create', ['only' => ['create', 'store']]);
+        $this->middleware('permission:regions_edit', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:regions_delete', ['only' => ['destroy']]);
     }
 
     public function index()
@@ -36,14 +36,15 @@ class RegionController extends Controller
                 ->addColumn('action', function ($row) {
                     $btn = '';
                     $user = Auth::user();
-                    if ($user && $user->can('region-edit')) {
-                        $btn .= '<a href="' . route('regions.edit', $row->id) . '" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i></a> ';
+                    if ($user && $user->can('regions_edit')) {
+                        $btn .= '<a href="' . route('admin.regions.edit', $row->id) . '" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i></a>';
                     }
-                    if ($user && $user->can('region-delete')) {
-                        $btn .= '<form action="' . route('regions.destroy', $row->id) . '" method="POST" style="display: inline-block;">';
+                    if ($user && $user->can('regions_delete')) {
+                        if ($btn) $btn .= ' ';
+                        $btn .= '<form action="' . route('admin.regions.destroy', $row->id) . '" method="POST" style="display: inline-block;">';
                         $btn .= csrf_field();
                         $btn .= method_field('DELETE');
-                        $btn .= '<button type="submit" class="btn btn-sm btn-danger" onclick="return confirm(\'Are you sure you want to delete this region?\')"><i class="fas fa-trash"></i></button>';
+                        $btn .= '<button type="submit" class="btn btn-sm btn-danger" onclick="return confirm(&quot;Are you sure you want to delete this region?&quot;)"><i class="fas fa-trash"></i></button>';
                         $btn .= '</form>';
                     }
                     return $btn;
@@ -65,7 +66,7 @@ class RegionController extends Controller
             'name' => $request->name,
         ]);
 
-        return redirect()->route('regions.index')->with('success', 'Region created successfully.');
+        return redirect()->route('admin.regions.index')->with('success', 'Region created successfully.');
     }
 
     public function edit($id)
@@ -83,7 +84,7 @@ class RegionController extends Controller
             'name' => $request->name,
         ]);
 
-        return redirect()->route('regions.index')->with('success', 'Region updated successfully.');
+        return redirect()->route('admin.regions.index')->with('success', 'Region updated successfully.');
     }
 
     public function destroy($id)
@@ -92,10 +93,10 @@ class RegionController extends Controller
         
         // Check if region has any headquarters
         if ($region->headquarters()->count() > 0) {
-            return redirect()->route('regions.index')->with('error', 'Cannot delete region that has headquarters assigned.');
+            return redirect()->route('admin.regions.index')->with('error', 'Cannot delete region that has headquarters assigned.');
         }
 
         $region->delete();
-        return redirect()->route('regions.index')->with('success', 'Region deleted successfully.');
+        return redirect()->route('admin.regions.index')->with('success', 'Region deleted successfully.');
     }
 }
