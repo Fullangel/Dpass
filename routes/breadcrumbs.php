@@ -291,8 +291,26 @@ Breadcrumbs::for ('regions', function ($trail) {
     $trail->push(trans('validation.attributes.regions'), route('admin.regions.index'));
 });
 
+// Dashboard / Headquarters
+Breadcrumbs::for ('headquarters', function ($trail) {
+    $trail->parent('dashboard');
+    $trail->push(trans('validation.attributes.headquarters'), route('admin.headquarters.index'));
+});
+
+// Dashboard / Headquarters / Add
+Breadcrumbs::for ('headquarters/add', function ($trail) {
+    $trail->parent('headquarters');
+    $trail->push(trans('validation.attributes.add'));
+});
+
+// Dashboard / Headquarters / Edit
+Breadcrumbs::for ('headquarters/edit', function ($trail) {
+    $trail->parent('headquarters');
+    $trail->push(trans('validation.attributes.edit'));
+});
+
 // Dashboard / Regions / Add
-Breadcrumbs::for ('regions/create', function ($trail) {
+Breadcrumbs::for ('regions/add', function ($trail) {
     $trail->parent('regions');
     $trail->push(trans('validation.attributes.add'));
 });
@@ -303,20 +321,8 @@ Breadcrumbs::for ('regions/edit', function ($trail) {
     $trail->push(trans('validation.attributes.edit'));
 });
 
-// Dashboard / Headquarters
-Breadcrumbs::for ('headquarters', function ($trail) {
-    $trail->parent('dashboard');
-    $trail->push(trans('validation.attributes.headquarters'), route('admin.headquarters.index'));
-});
-
-// Dashboard / Headquarters / Add
-Breadcrumbs::for ('headquarters/create', function ($trail) {
-    $trail->parent('headquarters');
-    $trail->push(trans('validation.attributes.add'));
-});
-
-// Dashboard / Headquarters / Edit
-Breadcrumbs::for ('headquarters/edit', function ($trail) {
-    $trail->parent('headquarters');
-    $trail->push(trans('validation.attributes.edit'));
+// Dashboard / Regions / Show
+Breadcrumbs::for ('regions/show', function ($trail) {
+    $trail->parent('regions');
+    $trail->push(trans('validation.attributes.view'));
 });

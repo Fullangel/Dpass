@@ -97,9 +97,19 @@ class EmployeeService
             $data['gender'] = $request->input('gender');
             $data['department_id'] = $request->input('department_id');
             $data['designation_id'] = $request->input('designation_id');
+            $data['region_id'] = $request->input('region_id');
+            $data['headquarters_id'] = $request->input('headquarters_id');
             $data['date_of_joining'] = $request->input('date_of_joining');
             $data['about'] = $request->input('about');
             $data['status'] = $request->input('status');
+            
+            // Agregar campos de auditoría para actualización
+            $data['editor_type'] = 'App\Models\User';
+            $data['editor_id'] = auth()->id() ?? 1; // Usar ID del usuario autenticado o 1 por defecto
+            
+            // Agregar campos de auditoría requeridos
+            $data['creator_type'] = 'App\Models\User';
+            $data['creator_id'] = auth()->id() ?? 1; // Usar ID del usuario autenticado o 1 por defecto
 
             $file_name = 'qrcode-' . preg_replace("/[^0-9]/", "", $request->input('phone')) . '.png';
             $data['barcode']  = $file_name;
@@ -142,6 +152,8 @@ class EmployeeService
             $data['gender'] = $request->input('gender');
             $data['department_id'] = $request->input('department_id');
             $data['designation_id'] = $request->input('designation_id');
+            $data['region_id'] = $request->input('region_id');
+            $data['headquarters_id'] = $request->input('headquarters_id');
             $data['date_of_joining'] = $request->input('date_of_joining');
             $data['about'] = $request->input('about');
             $data['status'] = $request->input('status');

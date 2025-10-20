@@ -52,6 +52,8 @@ class VisitorRequest extends FormRequest
             'email'                     => $email,
             'phone'                     => $phone,
             'employee_id'               => 'required|numeric',
+            'region_id'                 => 'required|numeric|exists:regions,id',
+            'headquarters_id'           => 'required|numeric|exists:headquarters,id',
             'gender'                    => 'required|numeric',
             'company_name'              => 'nullable|max:100',
             'national_identification_no' => $national_identification_no,

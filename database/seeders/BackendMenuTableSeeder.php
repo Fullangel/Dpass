@@ -16,7 +16,6 @@ class BackendMenuTableSeeder extends Seeder
         $parent = [
             'report'         => 9,
             'administrators' => 13,
-            'regions'        => 3,
         ];
 
         $menus = [
@@ -42,6 +41,14 @@ class BackendMenuTableSeeder extends Seeder
                 'icon'      => 'fas fa-map',
                 'parent_id' => 0,
                 'priority'  => 8850,
+                'status'    => 1,
+            ],
+            [
+                'name'      => 'headquarters',
+                'link'      => 'headquarters',
+                'icon'      => 'fas fa-building',
+                'parent_id' => 3, // ID de regions
+                'priority'  => 8840,
                 'status'    => 1,
             ],
             [

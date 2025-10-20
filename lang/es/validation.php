@@ -217,5 +217,6 @@ return array (
   'language' => 'Idioma',
   'addons' => 'Complementos',
   'whatsapp_settings' => 'Configuración de WhatsApp',
+  'regions' => 'Regiones',
   ),
 );

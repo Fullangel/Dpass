@@ -9,6 +9,10 @@ use Firebase\JWT\Key;
 use DateTimeImmutable;
 use App\Models\Visitor;
 use App\Models\Employee;
+use App\Models\Headquarters;
+use App\Models\Invitation;
+use App\Models\PreRegister;
+use App\Models\Region;
 use Illuminate\Support\Env;
 use Illuminate\Support\Str;
 use App\Enums\VisitorStatus;
@@ -55,8 +59,9 @@ class VisitorController extends BackendController
 
     public function create(Request $request)
     {
-
         $this->data['employees'] = Employee::where('status', Status::ACTIVE)->get();
+        $this->data['regions'] = Region::all();
+        $this->data['headquarters'] = Headquarters::all();
 
         return view('admin.visitor.create', $this->data);
     }
@@ -127,6 +132,8 @@ class VisitorController extends BackendController
     public function edit($id)
     {
         $this->data['employees'] = Employee::where('status', Status::ACTIVE)->get();
+        $this->data['regions'] = Region::all();
+        $this->data['headquarters'] = Headquarters::all();
         $this->data['visitingDetails'] = $this->visitorService->find($id);
         if ($this->data['visitingDetails']) {
             return view('admin.visitor.edit', $this->data);

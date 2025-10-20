@@ -13,8 +13,10 @@ use App\Models\Booking;
 use App\Models\Department;
 use App\Models\Designation;
 use App\Models\Employee;
+use App\Models\Headquarters;
 use App\Models\Invitation;
 use App\Models\PreRegister;
+use App\Models\Region;
 use App\Models\VisitingDetails;
 use App\Models\Visitor;
 use App\Notifications\SendInvitationToVisitors;
@@ -62,6 +64,8 @@ class EmployeeController extends Controller
 
         $this->data['designations'] = Designation::where('status', Status::ACTIVE)->get();
         $this->data['departments'] = Department::where('status', Status::ACTIVE)->get();
+        $this->data['regions'] = Region::all();
+        $this->data['headquarters'] = Headquarters::all();
 
         return view('admin.employee.create', $this->data);
     }
@@ -90,6 +94,8 @@ class EmployeeController extends Controller
         $this->data['employee'] = $this->employeeService->find($id);
         $this->data['designations'] = Designation::where('status', Status::ACTIVE)->get();
         $this->data['departments'] = Department::where('status', Status::ACTIVE)->get();
+        $this->data['regions'] = Region::all();
+        $this->data['headquarters'] = Headquarters::all();
         return view('admin.employee.edit', $this->data);
     }
     public function update(EmployeeUpdateRequest $request, Employee $employee)
@@ -151,6 +157,12 @@ class EmployeeController extends Controller
             })
             ->editColumn('phone', function ($employee) {
                 return Str::limit(optional($employee->user)->phone, 50);
+            })
+            ->editColumn('region', function ($employee) {
+                return optional($employee->region)->name ?? '-';
+            })
+            ->editColumn('headquarters', function ($employee) {
+                return optional($employee->headquarters)->name ?? '-';
             })
             ->editColumn('status', function ($employee) {
                 return ($employee->status == 5 ? trans('statuses.' . Status::ACTIVE) : trans('statuses.' . Status::INACTIVE));

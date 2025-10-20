@@ -23,6 +23,8 @@ function load_data(status = '',requests='') {
       {data : 'name', name : 'name'},
       {data : 'email', name : 'email'},
       {data : 'phone', name : 'phone'},
+      {data : 'region', name : 'region'},
+      {data : 'headquarters', name : 'headquarters'},
       {data : 'date_of_joining', name : 'date_of_joining'},
       {data : 'status', name : 'status'},
       {data : 'action', name : 'action'},
@@ -32,7 +34,7 @@ function load_data(status = '',requests='') {
 
   let hidecolumn = $('#maintable').data('hidecolumn');
   if(!hidecolumn) {
-      table.column( 5 ).visible( false );
+      table.column( 7 ).visible( false );
   }
 }
 

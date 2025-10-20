@@ -4,6 +4,7 @@ return array (
   'dashboard' => 'Dashboard',
   'profile' => 'Profile',
   'regions' => 'Regions',
+  'headquarters' => 'Headquarters',
   'departments' => 'Departments',
   'designations' => 'Designations',
   'employees' => 'Employees',

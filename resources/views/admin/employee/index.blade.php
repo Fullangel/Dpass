@@ -32,6 +32,8 @@
                                         <th>{{ __('levels.name') }}</th>
                                         <th>{{ __('levels.email') }}</th>
                                         <th>{{ __('levels.phone') }}</th>
+                                        <th>{{ __('region.region') }}</th>
+                                        <th>{{ __('headquarters.headquarters') }}</th>
                                         <th>{{ __('employee.joining_date') }}</th>
                                         <th>{{ __('levels.status') }}</th>
                                         <th>{{ __('levels.actions') }}</th>

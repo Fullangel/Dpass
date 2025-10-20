@@ -8,6 +8,7 @@ use App\Models\Region;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\DataTables;
+use Illuminate\Support\Facades\Log;
 
 class RegionController extends Controller
 {
@@ -22,31 +23,54 @@ class RegionController extends Controller
 
     public function index()
     {
-        $title = 'Regions';
-        return view('admin.region.index', compact('title'));
+        // Verificar permisos adicionales para seguridad
+        if (!auth()->user()->can('regions') && !auth()->user()->can('regions_show')) {
+            Log::warning('Intento de acceso no autorizado a regiones', [
+                'user_id' => auth()->id(),
+                'user_email' => auth()->user()->email,
+                'ip' => request()->ip(),
+                'timestamp' => now()
+            ]);
+            abort(403, 'No tiene permisos para ver regiones.');
+        }
+        
+        Log::info('Acceso autorizado a regiones', [
+            'user_id' => auth()->id(),
+            'user_email' => auth()->user()->email,
+            'timestamp' => now()
+        ]);
+        
+        return view('admin.region.index');
     }
 
     public function getRegions(Request $request)
     {
         if ($request->ajax()) {
-            $regions = Region::select('id', 'name', 'created_at', 'updated_at')->get();
+            $regions = Region::select('id', 'name')->get();
             
             return DataTables::of($regions)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
-                    $btn = '';
+                    $btn = '<div class="d-flex justify-content-center">';
                     $user = Auth::user();
+                    
                     if ($user && $user->can('regions_edit')) {
-                        $btn .= '<a href="' . route('admin.regions.edit', $row->id) . '" class="btn btn-sm btn-primary"><i class="fas fa-edit"></i></a>';
+                        $btn .= '<a href="' . route('admin.regions.edit', $row->id) . '" class="btn btn-sm btn-primary mr-1" data-toggle="tooltip" title="Edit Region">';
+                        $btn .= '<i class="fas fa-edit"></i>';
+                        $btn .= '</a>';
                     }
+                    
                     if ($user && $user->can('regions_delete')) {
-                        if ($btn) $btn .= ' ';
-                        $btn .= '<form action="' . route('admin.regions.destroy', $row->id) . '" method="POST" style="display: inline-block;">';
+                        $btn .= '<form action="' . route('admin.regions.destroy', $row->id) . '" method="POST" class="d-inline" onsubmit="return confirm(\'Are you sure you want to delete this region?\')">';
                         $btn .= csrf_field();
                         $btn .= method_field('DELETE');
-                        $btn .= '<button type="submit" class="btn btn-sm btn-danger" onclick="return confirm(&quot;Are you sure you want to delete this region?&quot;)"><i class="fas fa-trash"></i></button>';
+                        $btn .= '<button type="submit" class="btn btn-sm btn-danger" data-toggle="tooltip" title="Delete Region">';
+                        $btn .= '<i class="fas fa-trash"></i>';
+                        $btn .= '</button>';
                         $btn .= '</form>';
                     }
+                    
+                    $btn .= '</div>';
                     return $btn;
                 })
                 ->rawColumns(['action'])

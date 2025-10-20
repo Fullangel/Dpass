@@ -19,8 +19,6 @@ function load_data(status = '') {
         columns: [
             { data: 'id', name: 'id' },
             { data: 'name', name: 'name' },
-            { data: 'created_at', name: 'created_at' },
-            { data: 'updated_at', name: 'updated_at' },
             { data: 'action', name: 'action' },
         ],
         "ordering" : false
@@ -28,7 +26,7 @@ function load_data(status = '') {
 
     let hidecolumn = $('#maintable').data('hidecolumn');
     if(!hidecolumn) {
-        table.column( 4 ).visible( false );
+        table.column( 2 ).visible( false );
     }
 }
 

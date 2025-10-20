@@ -4,6 +4,7 @@ return array (
   'dashboard' => 'Tablero',
   'profile' => 'Mi Perfil',
   'regions' => 'Regiones',
+  'headquarters' => 'Sedes',
   'departments' => 'Departamentos',
   'designations' => 'Cargos',
   'employees' => 'Funcionarios',

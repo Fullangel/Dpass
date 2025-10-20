@@ -198,6 +198,7 @@ return array (
     'banners' => 'Banners',
     'request-withdraw' => 'Request Withdraw',
     'pages' => 'Pages',
+    'regions' => 'Regions',
     'footer_menu_section_id' => 'Footer Menu Section',
     'url' => 'URL',
     'collections' => 'Collections',

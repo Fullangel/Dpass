@@ -71,6 +71,10 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'installed', 'backen
     Route::resource('regions', RegionController::class);
     Route::get('get-regions', [RegionController::class, 'getRegions'])->name('regions.get-regions');
 
+    //headquarters (sedes)
+    Route::resource('headquarters', \App\Http\Controllers\Admin\HeadquartersController::class);
+    Route::get('get-headquarters', [\App\Http\Controllers\Admin\HeadquartersController::class, 'getHeadquarters'])->name('headquarters.get-headquarters');
+
     //web-token
     Route::post('store-token', [WebNotificationController::class, 'store'])->name('store.token');
 

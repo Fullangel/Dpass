@@ -7,6 +7,47 @@
 <link rel="stylesheet" href="{{ asset('assets/modules/bootstrap-datepicker/css/bootstrap-datepicker.min.css') }}">
 @endsection
 
+@push('scripts')
+<script>
+$(document).ready(function() {
+    // Filter headquarters based on selected region
+    function filterHeadquarters() {
+        var selectedRegion = $('#region_id').val();
+        var headquartersSelect = $('#headquarters_id');
+        
+        headquartersSelect.find('option').each(function() {
+            var option = $(this);
+            if (option.val() === '') {
+                // Keep the "Select Headquarters" option
+                option.show();
+            } else {
+                var regionId = option.data('region');
+                if (selectedRegion === '' || regionId == selectedRegion) {
+                    option.show();
+                } else {
+                    option.hide();
+                }
+            }
+        });
+        
+        // Reset headquarters selection if current selection is hidden
+        var selectedHeadquarters = headquartersSelect.val();
+        if (selectedHeadquarters && headquartersSelect.find('option:selected').is(':hidden')) {
+            headquartersSelect.val('');
+        }
+    }
+    
+    // Initial filter
+    filterHeadquarters();
+    
+    // Filter on region change
+    $('#region_id').change(function() {
+        filterHeadquarters();
+    });
+});
+</script>
+@endpush
+
 @section('main-content')
 
 <section class="section">
@@ -133,6 +174,42 @@
                                         @endforeach
                                     </select>
                                     @error('designation_id')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                    @enderror
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col">
+                                    <label for="region_id">{{ __('region.region') }} <span class="text-danger">*</span></label>
+                                    <select id="region_id" name="region_id"
+                                        class="form-control @error('region_id') is-invalid @enderror" required>
+                                        <option value="">{{ __('region.select_region') }}</option>
+                                        @foreach($regions as $region)
+                                        <option value="{{ $region->id }}"
+                                            {{ (old('region_id') == $region->id) ? 'selected' : '' }}>
+                                            {{ $region->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('region_id')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                    @enderror
+                                </div>
+                                <div class="form-group col">
+                                    <label for="headquarters_id">{{ __('headquarters.headquarters') }} <span class="text-danger">*</span></label>
+                                    <select id="headquarters_id" name="headquarters_id"
+                                        class="form-control @error('headquarters_id') is-invalid @enderror" required>
+                                        <option value="">{{ __('headquarters.select_headquarters') }}</option>
+                                        @foreach($headquarters as $headquarter)
+                                        <option value="{{ $headquarter->id }}" data-region="{{ $headquarter->region_id }}"
+                                            {{ (old('headquarters_id') == $headquarter->id) ? 'selected' : '' }}>
+                                            {{ $headquarter->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('headquarters_id')
                                     <div class="invalid-feedback">
                                         {{ $message }}
                                     </div>

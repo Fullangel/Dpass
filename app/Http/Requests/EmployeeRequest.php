@@ -32,6 +32,8 @@ class EmployeeRequest extends FormRequest
             'password'                  => 'required|same:password_confirmation',
             'department_id'             => 'required|numeric',
             'designation_id'            => 'required|numeric',
+            'region_id'                 => 'required|numeric|exists:regions,id',
+            'headquarters_id'           => 'required|numeric|exists:headquarters,id',
             'gender'                    => 'required|numeric',
             'status'                    => 'required|numeric',
             'date_of_joining'           => 'required',

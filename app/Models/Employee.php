@@ -59,6 +59,16 @@ class Employee extends Model implements  HasMedia
         return $this->belongsTo(Designation::class);
     }
 
+    public function region()
+    {
+        return $this->belongsTo(Region::class);
+    }
+
+    public function headquarters()
+    {
+        return $this->belongsTo(Headquarters::class);
+    }
+
     /**
      * @return string
      */
