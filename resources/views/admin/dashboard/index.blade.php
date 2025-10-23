@@ -156,6 +156,7 @@
                                         <th>{{ __('visitor.national_identification_no') }}</th>
                                         <th>{{ __('levels.name') }}</th>
                                         <th>{{ __('visitor.employee') }}</th>
+                                        <th>{{ __('visitor.location') }}</th>
                                         <th>{{ __('visitor.checkin') }}</th>
                                         <th>{{ __('visitor.check_out') }}</th>
                                         <th>{{ __('levels.status') }}</th>

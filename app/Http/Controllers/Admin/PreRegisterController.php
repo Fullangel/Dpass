@@ -7,6 +7,7 @@ use App\Enums\Status;
 use App\Models\Visitor;
 use App\Models\Employee;
 use App\Models\PreRegister;
+use App\Models\Headquarters;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
@@ -17,6 +18,7 @@ use App\Http\Requests\PreRegisterRequest;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\Http\Services\PreRegister\PreRegisterService;
 use App\Http\Controllers\BackendController;
+use Illuminate\Support\Facades\Auth;
 
 class PreRegisterController extends BackendController
 {
@@ -28,11 +30,11 @@ class PreRegisterController extends BackendController
 
         $this->middleware('auth');
         $this->data['sitetitle'] = 'Pre-registers';
-        $this->middleware(['permission:pre-registers'])->only('index');
-        $this->middleware(['permission:pre-registers_create'])->only('create', 'store');
-        $this->middleware(['permission:pre-registers_edit'])->only('edit', 'update');
-        $this->middleware(['permission:pre-registers_delete'])->only('destroy');
-        $this->middleware(['permission:pre-registers_show'])->only('show');
+        $this->middleware(['permission:pre-registers|pre-registers_headquarters'])->only('index');
+        $this->middleware(['permission:pre-registers_create|pre-registers_create_headquarters'])->only('create', 'store');
+        $this->middleware(['permission:pre-registers_edit|pre-registers_edit_headquarters'])->only('edit', 'update');
+        $this->middleware(['permission:pre-registers_delete|pre-registers_delete_headquarters'])->only('destroy');
+        $this->middleware(['permission:pre-registers_show|pre-registers_show_headquarters'])->only('show');
 
     }
 
@@ -48,9 +50,15 @@ class PreRegisterController extends BackendController
 
     public function create(Request $request)
     {
+        $user = Auth::user();
+        
         if(auth()->user()->getrole->name == 'Employee') {
             $this->data['employees'] = Employee::where(['status'=>Status::ACTIVE,'id'=>auth()->user()->employee->id])->get();
-        }else {
+        } else if ($user->hasRole('supervisor')) {
+            $this->data['employees'] = Employee::where('status', Status::ACTIVE)
+                ->where('headquarters_id', $user->headquarters_id)
+                ->get();
+        } else {
             $this->data['employees'] = Employee::where('status', Status::ACTIVE)->get();
         }
 
@@ -82,33 +90,54 @@ class PreRegisterController extends BackendController
         if($this->data['preregister']){
             return view('admin.pre-register.show', $this->data);
         }else {
-            return redirect()->route('admin.pre-registers.index');
+            return redirect()->route('admin.pre-registers.index')->withError('No tiene permiso para ver este pre-registro.');
         }
     }
 
     public function edit($id)
     {
+        $user = Auth::user();
+        
         if(auth()->user()->getrole->name == 'Employee') {
             $this->data['employees'] = Employee::where(['status'=>Status::ACTIVE,'id'=>auth()->user()->employee->id])->get();
-        }else {
+        } else if ($user->hasRole('supervisor')) {
+            $this->data['employees'] = Employee::where('status', Status::ACTIVE)
+                ->where('headquarters_id', $user->headquarters_id)
+                ->get();
+        } else {
             $this->data['employees'] = Employee::where('status', Status::ACTIVE)->get();
         }
         $this->data['preregister'] = $this->preRegisterService->find($id);
         if($this->data['preregister']){
             return view('admin.pre-register.edit', $this->data);
         }else {
-            return redirect()->route('admin.pre-registers.index');
+            return redirect()->route('admin.pre-registers.index')->withError('No tiene permiso para editar este pre-registro.');
         }
     }
 
-    public function update(PreRegisterRequest $request,PreRegister $preRegister)
+    public function update(Request $request,PreRegister $preRegister)
     {
+        // Verificar que el supervisor solo pueda actualizar pre-registros de su sede
+        if (auth()->user()->hasRole('supervisor')) {
+            if ($preRegister->headquarters_id != auth()->user()->headquarters_id) {
+                return redirect()->route('admin.pre-registers.index')->withError('No tiene permiso para actualizar este pre-registro.');
+            }
+        }
+        
         $this->preRegisterService->update($request,$preRegister->id);
         return redirect()->route('admin.pre-registers.index')->withSuccess('The data updated successfully!');
     }
 
     public function destroy($id)
     {
+        // Verificar que el supervisor solo pueda eliminar pre-registros de su sede
+        if (auth()->user()->hasRole('supervisor')) {
+            $preRegister = PreRegister::find($id);
+            if (!$preRegister || $preRegister->headquarters_id != auth()->user()->headquarters_id) {
+                return redirect()->route('admin.pre-registers.index')->withError('No tiene permiso para eliminar este pre-registro.');
+            }
+        }
+        
         $this->preRegisterService->delete($id);
         return redirect()->route('admin.pre-registers.index')->withSuccess('The data delete successfully!');
     }

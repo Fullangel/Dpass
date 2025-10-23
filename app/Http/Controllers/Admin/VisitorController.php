@@ -66,10 +66,29 @@ class VisitorController extends BackendController
         return view('admin.visitor.create', $this->data);
     }
 
+    /**
+     * Obtener región y sede del funcionario seleccionado
+     */
+    public function getEmployeeRegionHeadquarters(Request $request)
+    {
+        $request->validate([
+            'employee_id' => 'required|exists:employees,id'
+        ]);
+
+        $employee = Employee::with(['region', 'headquarters'])->find($request->employee_id);
+
+        return response()->json([
+            'region_id' => $employee->region_id,
+            'region_name' => $employee->region->name ?? null,
+            'headquarters_id' => $employee->headquarters_id,
+            'headquarters_name' => $employee->headquarters->name ?? null
+        ]);
+    }
+
     public function store(VisitorRequest $request)
     {
         $visitingDetail = $this->visitorService->make($request);
-        $imageUrl = 'app/public'.str_replace(asset('storage'),"",$visitingDetail->images);
+        $imageUrl = 'app/public'.str_replace('/storage/',"",$visitingDetail->images);
         try{
             $optimizerChain = OptimizerChainFactory::create();
             $optimizerChain->optimize(storage_path($imageUrl));
@@ -96,6 +115,12 @@ class VisitorController extends BackendController
     {
         $this->data['visitingDetails'] = $this->visitorService->find($id);
         if ($this->data['visitingDetails']) {
+            // Verificar que el supervisor solo pueda ver visitas de su sede
+            if (auth()->user()->hasRole('supervisor')) {
+                if ($this->data['visitingDetails']->headquarters_id != auth()->user()->headquarters_id) {
+                    return redirect()->route('admin.visitors.index')->withError('No tiene permiso para ver esta visita.');
+                }
+            }
             return view('admin.visitor.show', $this->data);
         } else {
             return redirect()->route('admin.visitors.index');
@@ -131,21 +156,36 @@ class VisitorController extends BackendController
 
     public function edit($id)
     {
+        $this->data['visitingDetails'] = $this->visitorService->find($id);
+        if (!$this->data['visitingDetails']) {
+            return redirect()->route('admin.visitors.index');
+        }
+        
+        // Verificar que el supervisor o recepción solo puedan editar visitas de su sede
+        if (auth()->user()->hasRole('supervisor') || auth()->user()->hasRole('Reception')) {
+            if ($this->data['visitingDetails']->headquarters_id != auth()->user()->headquarters_id) {
+                return redirect()->route('admin.visitors.index')->withError('No tiene permiso para editar esta visita.');
+            }
+        }
+        
         $this->data['employees'] = Employee::where('status', Status::ACTIVE)->get();
         $this->data['regions'] = Region::all();
         $this->data['headquarters'] = Headquarters::all();
-        $this->data['visitingDetails'] = $this->visitorService->find($id);
-        if ($this->data['visitingDetails']) {
-            return view('admin.visitor.edit', $this->data);
-        } else {
-            return redirect()->route('admin.visitors.index');
-        }
+        
+        return view('admin.visitor.edit', $this->data);
     }
 
     public function update(VisitorRequest $request, VisitingDetails $visitor)
     {
+        // Verificar que el supervisor o recepción solo puedan actualizar visitas de su sede
+        if (auth()->user()->hasRole('supervisor') || auth()->user()->hasRole('Reception')) {
+            if ($visitor->headquarters_id != auth()->user()->headquarters_id) {
+                return redirect()->route('admin.visitors.index')->withError('No tiene permiso para actualizar esta visita.');
+            }
+        }
+        
         $visitingDetail = $this->visitorService->update($request, $visitor->id);
-        $imageUrl = 'app/public'.str_replace(asset('storage'),"",$visitingDetail->images);
+        $imageUrl = 'app/public'.str_replace('/storage/',"",$visitingDetail->images);
         try{
             $optimizerChain = OptimizerChainFactory::create();
             $optimizerChain->optimize(storage_path($imageUrl));
@@ -157,6 +197,14 @@ class VisitorController extends BackendController
 
     public function destroy($id)
     {
+        // Verificar que el supervisor o recepción solo puedan eliminar visitas de su sede
+        if (auth()->user()->hasRole('supervisor') || auth()->user()->hasRole('Reception')) {
+            $visitor = VisitingDetails::find($id);
+            if (!$visitor || $visitor->headquarters_id != auth()->user()->headquarters_id) {
+                return redirect()->route('admin.visitors.index')->withError('No tiene permiso para eliminar esta visita.');
+            }
+        }
+        
         $this->visitorService->delete($id);
         return redirect()->route('admin.visitors.index')->withSuccess('The data delete successfully!');
     }
@@ -218,6 +266,11 @@ class VisitorController extends BackendController
             ->editColumn('employee_id', function ($visitingDetail) {
                 return optional($visitingDetail->employee->user)->name;
             })
+            ->editColumn('location', function ($visitingDetail) {
+                $region = optional($visitingDetail->region)->name;
+                $headquarters = optional($visitingDetail->headquarters)->name;
+                return $region && $headquarters ? $region . ' - ' . $headquarters : ($region ?? $headquarters ?? 'N/A');
+            })
             ->editColumn('status', function ($visitingDetail) {
                 $drop = '';
                 $dropActive = false;
@@ -265,7 +318,7 @@ class VisitorController extends BackendController
             ->editColumn('id', function ($visitingDetail) {
                 return $visitingDetail->setID;
             })
-            ->rawColumns(['name', 'action'])
+            ->rawColumns(['name', 'action', 'location'])
             ->escapeColumns([])
             ->make(true);
     }

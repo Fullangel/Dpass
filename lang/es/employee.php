@@ -28,5 +28,7 @@ return array (
   'expected_time' => 'Hora Esperada',
   'expected_Date' => 'Fecha Esperada',
   'download' => 'Descargar Código QR',
+  'role' => 'Rol',
+  'select_role' => 'Seleccionar Rol',
 );
 

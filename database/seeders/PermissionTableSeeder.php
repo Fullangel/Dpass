@@ -234,6 +234,29 @@ class PermissionTableSeeder extends Seeder
         $permissionArray[$i]['name']       = 'headquarters_show';
         $permissionArray[$i]['guard_name'] = 'web';
 
-        Permission::insert($permissionArray);
+        // Permisos base para acceso headquarters (usados por supervisores)
+        $i++;
+        $permissionArray[$i]['name']       = 'employees_headquarters';
+        $permissionArray[$i]['guard_name'] = 'web';
+
+        $i++;
+        $permissionArray[$i]['name']       = 'departments_headquarters';
+        $permissionArray[$i]['guard_name'] = 'web';
+
+        $i++;
+        $permissionArray[$i]['name']       = 'designations_headquarters';
+        $permissionArray[$i]['guard_name'] = 'web';
+
+        $i++;
+        $permissionArray[$i]['name']       = 'pre-registers_headquarters';
+        $permissionArray[$i]['guard_name'] = 'web';
+
+        // Insertar permisos usando firstOrCreate para evitar duplicados
+        foreach ($permissionArray as $permission) {
+            Permission::firstOrCreate([
+                'name' => $permission['name'],
+                'guard_name' => $permission['guard_name']
+            ]);
+        }
     }
 }

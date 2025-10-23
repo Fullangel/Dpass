@@ -1,8 +1,8 @@
 {
-    "name": "Dpas2/SENiAT",
+    "name": "Dpas2/seniat",
     "type": "project",
-    "description": "Sistema de Recepcion de Visitantes al SENiAT",
-    "version": "1.1.0",
+    "description": "Sistema de Recepcion de Visitantes al seniat",
+    "version": "1.2.0",
     "keywords": [
         "framework",
         "laravel"

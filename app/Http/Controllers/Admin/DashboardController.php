@@ -138,6 +138,78 @@ class DashboardController extends BackendController
             }
             
             $totalEmployees = 0;
+        } elseif ($userRole->name == 'supervisor') {
+            // Para supervisores, mostrar solo datos de su sede
+            $headquartersId = null;
+            if (auth()->user()->employee) {
+                $headquartersId = auth()->user()->employee->headquarters_id;
+            }
+            
+            if ($headquartersId) {
+                $visitors       = VisitingDetails::where(['headquarters_id' => $headquartersId])->orderBy('id', 'desc')->get();
+                $preregister    = PreRegister::where(['headquarters_id' => $headquartersId])->orderBy('id', 'desc')->get();
+                $employees      = Employee::where(['headquarters_id' => $headquartersId])->orderBy('id', 'desc')->get();
+                
+                $visitors_check_in = VisitingDetails::where(['headquarters_id' => $headquartersId])
+                                                      ->where('checkin_at', '=', NULL)
+                                                      ->where('checkout_at','=', NULL)
+                                                      ->count();
+                                                      
+                $visitors_check_out = VisitingDetails::where(['headquarters_id' => $headquartersId])
+                                                      ->where('checkin_at', '!=', NULL)
+                                                      ->where('checkout_at','!=', NULL)
+                                                      ->count();
+                                                      
+                $visitors_in = VisitingDetails::where(['headquarters_id' => $headquartersId])
+                                                      ->where('status', '=', 2)
+                                                      ->where('checkout_at','=', NULL)
+                                                      ->count();                                                  
+            } else {
+                $visitors = collect();
+                $preregister = collect();
+                $employees = collect();
+                $visitors_check_in = 0;
+                $visitors_check_out = 0;
+                $visitors_in = 0;
+            }
+            
+            $totalEmployees = count($employees);
+        } elseif ($userRole->name == 'Reception') {
+            // Para recepción, mostrar solo datos de su sede
+            $headquartersId = null;
+            if (auth()->user()->employee) {
+                $headquartersId = auth()->user()->employee->headquarters_id;
+            }
+            
+            if ($headquartersId) {
+                $visitors       = VisitingDetails::where(['headquarters_id' => $headquartersId])->orderBy('id', 'desc')->get();
+                $preregister    = PreRegister::where(['headquarters_id' => $headquartersId])->orderBy('id', 'desc')->get();
+                $employees      = Employee::where(['headquarters_id' => $headquartersId])->orderBy('id', 'desc')->get();
+                
+                $visitors_check_in = VisitingDetails::where(['headquarters_id' => $headquartersId])
+                                                      ->where('checkin_at', '=', NULL)
+                                                      ->where('checkout_at','=', NULL)
+                                                      ->count();
+                                                      
+                $visitors_check_out = VisitingDetails::where(['headquarters_id' => $headquartersId])
+                                                      ->where('checkin_at', '!=', NULL)
+                                                      ->where('checkout_at','!=', NULL)
+                                                      ->count();
+                                                      
+                $visitors_in = VisitingDetails::where(['headquarters_id' => $headquartersId])
+                                                      ->where('status', '=', 2)
+                                                      ->where('checkout_at','=', NULL)
+                                                      ->count();                                                  
+            } else {
+                $visitors = collect();
+                $preregister = collect();
+                $employees = collect();
+                $visitors_check_in = 0;
+                $visitors_check_out = 0;
+                $visitors_in = 0;
+            }
+            
+            $totalEmployees = count($employees);
         } else {
             $visitors       = VisitingDetails::orderBy('id', 'desc')->get();
             $preregister    = PreRegister::orderBy('id', 'desc')->get();

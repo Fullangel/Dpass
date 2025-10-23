@@ -28,4 +28,6 @@ return array (
   'expected_time' => 'Expected Time',
   'expected_Date' => 'Expected Date',
   'download' => 'Download Qr',
+  'role' => 'Role',
+  'select_role' => 'Select Role',
 );

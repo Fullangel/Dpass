@@ -28,4 +28,5 @@ return array (
   'email' => 'Correo',
   'date' => 'Fecha',
   'checkout' => 'Salida',
+  'location' => 'Ubicación (Región - Sede)',
 );

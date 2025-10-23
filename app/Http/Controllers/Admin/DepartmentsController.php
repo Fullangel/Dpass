@@ -13,15 +13,27 @@ use Yajra\DataTables\DataTables;
 class DepartmentsController extends Controller
 {
 
+    /**
+     * Get supervisor's headquarters ID
+     */
+    protected function getSupervisorHeadquartersId()
+    {
+        if (auth()->user()->hasRole('supervisor')) {
+            $supervisorEmployee = \App\Models\Employee::where('user_id', auth()->user()->id)->first();
+            return $supervisorEmployee ? $supervisorEmployee->headquarters_id : null;
+        }
+        return null;
+    }
+
     public function __construct()
     {
         $this->middleware('auth');
         $this->data['sitetitle'] = 'Departments';
 
-        $this->middleware(['permission:departments'])->only('index');
-        $this->middleware(['permission:departments_create'])->only('create', 'store');
-        $this->middleware(['permission:departments_edit'])->only('edit', 'update');
-        $this->middleware(['permission:departments_delete'])->only('destroy');
+        $this->middleware(['permission:departments|departments_headquarters'])->only('index');
+        $this->middleware(['permission:departments_create|departments_create_headquarters'])->only('create', 'store');
+        $this->middleware(['permission:departments_edit|departments_edit_headquarters'])->only('edit', 'update');
+        $this->middleware(['permission:departments_delete|departments_delete_headquarters'])->only('destroy');
     }
 
     /**
@@ -42,6 +54,9 @@ class DepartmentsController extends Controller
      */
     public function create()
     {
+        // Los supervisores pueden ver todas las sedes para crear departamentos
+        $this->data['headquarters'] = \App\Models\Headquarters::all();
+        
         return view('admin.department.create', $this->data);
     }
 
@@ -55,11 +70,10 @@ class DepartmentsController extends Controller
     public function store(DepartmentsRequest $request)
     {
         $input = $request->all();
+        
         Department::create($input);
 
-        return redirect(route('admin.departments.index'))->withSuccess('Departments created successfully');
-        // return redirect(route('admin.category.index'))->withSuccess('The data inserted successfully.');
-
+        return redirect('admin/departments')->with('success', 'Departamento creado exitosamente');
     }
 
 
@@ -109,6 +123,7 @@ class DepartmentsController extends Controller
 
     public function getDepartments(Request $request)
     {
+        // Mostrar todos los departamentos sin filtrar por sede, incluso para supervisores
         $departments = Department::orderBy('id', 'desc')->get();
         $i         = 1;
         $departmentArray = [];
@@ -124,11 +139,11 @@ class DepartmentsController extends Controller
             ->addColumn('action', function ($department) {
                 $retAction = '';
 
-                if (auth()->user()->can('departments_edit')) {
+                if (auth()->user()->can('departments_edit') || auth()->user()->can('departments_edit_headquarters')) {
                     $retAction .= '<a href="' . route('admin.departments.edit', $department) . '" class="btn btn-sm btn-icon float-left btn-primary" data-toggle="tooltip" data-placement="top" title="Edit"><i class="far fa-edit"></i></a>';
                 }
 
-                if (auth()->user()->can('departments_delete')) {
+                if (auth()->user()->can('departments_delete') || auth()->user()->can('departments_delete_headquarters')) {
                     $retAction .= '<form class="float-left pl-2" action="' . route('admin.departments.destroy', $department) . '" method="POST">' . method_field('DELETE') . csrf_field() . '<button class="btn btn-sm btn-icon btn-danger delete" data-toggle="tooltip" data-placement="top" title="Delete"><i class="fa fa-trash"></i></button></form>';
                 }
                 return $retAction;

@@ -18,6 +18,10 @@
     <link rel="stylesheet" href="{{ asset('frontend/frontend/css/custom.css') }}">
     <link rel="stylesheet" href="{{ asset('css/id-card-print.css') }}">
 
+    <!-- Theme CSS -->
+    <link rel="stylesheet" href="{{ asset('assets/css/theme-variables.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/theme-overrides.css') }}">
+
     <!-- Template core CSS -->
     <link rel="stylesheet" href="{{ asset('assets/modules/select2/dist/css/select2.min.css') }}">
 

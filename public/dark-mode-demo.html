@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo - Nuevo Modo Oscuro</title>
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/fontawesome.min.css">
+    <link rel="stylesheet" href="assets/css/theme-variables.css">
+    <link rel="stylesheet" href="assets/css/theme-overrides.css">
+    <link rel="stylesheet" href="assets/css/style.css">
+    
+    <style>
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .color-card {
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .color-swatch {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            border: 2px solid var(--border-primary);
+        }
+        
+        .demo-section {
+            margin: 40px 0;
+            padding: 30px;
+            border-radius: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-primary);
+        }
+        
+        .theme-toggle-demo {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .accent-demo {
+            background: var(--accent-100);
+            color: var(--accent-200);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Theme Toggle -->
+    <div class="theme-toggle-demo">
+        <button class="theme-toggle" onclick="toggleTheme()">
+            <i class="fas fa-moon"></i>
+        </button>
+    </div>
+
+    <div class="container mt-5">
+        <div class="text-center mb-5">
+            <h1 class="display-4" style="color: var(--primary-color);">Nueva Paleta de Colores - Modo Oscuro</h1>
+            <p class="lead" style="color: var(--text-secondary);">Paleta de colores más equilibrada y suave para el modo oscuro</p>
+        </div>
+
+        <!-- Color Palette Showcase -->
+        <div class="demo-section">
+            <h2 class="mb-4" style="color: var(--primary-color);">Paleta de Colores Propuesta</h2>
+            
+            <div class="color-palette">
+                <div class="color-card" style="background: var(--bg-card);">
+                    <div class="color-swatch" style="background: #1F3A5F;"></div>
+                    <h5 style="color: var(--text-primary);">--primary-100</h5>
+                    <p style="color: var(--text-secondary);">#1F3A5F</p>
+                    <small style="color: var(--text-muted);">Azul oscuro principal</small>
+                </div>
+                
+                <div class="color-card" style="background: var(--bg-card);">
+                    <div class="color-swatch" style="background: #4d648d;"></div>
+                    <h5 style="color: var(--text-primary);">--primary-200</h5>
+                    <p style="color: var(--text-secondary);">#4d648d</p>
+                    <small style="color: var(--text-muted);">Azul medio secundario</small>
+                </div>
+                
+                <div class="color-card" style="background: var(--bg-card);">
+                    <div class="color-swatch" style="background: #3D5A80;"></div>
+                    <h5 style="color: var(--text-primary);">--accent-100</h5>
+                    <p style="color: var(--text-secondary);">#3D5A80</p>
+                    <small style="color: var(--text-muted);">Azul acentuado</small>
+                </div>
+                
+                <div class="color-card" style="background: var(--bg-card);">
+                    <div class="color-swatch" style="background: #0F1C2E;"></div>
+                    <h5 style="color: var(--text-primary);">--bg-100</h5>
+                    <p style="color: var(--text-secondary);">#0F1C2E</p>
+                    <small style="color: var(--text-muted);">Fondo principal</small>
+                </div>
+                
+                <div class="color-card" style="background: var(--bg-card);">
+                    <div class="color-swatch" style="background: #1f2b3e;"></div>
+                    <h5 style="color: var(--text-primary);">--bg-200</h5>
+                    <p style="color: var(--text-secondary);">#1f2b3e</p>
+                    <small style="color: var(--text-muted);">Fondo secundario</small>
+                </div>
+                
+                <div class="color-card" style="background: var(--bg-card);">
+                    <div class="color-swatch" style="background: #374357;"></div>
+                    <h5 style="color: var(--text-primary);">--bg-300</h5>
+                    <p style="color: var(--text-secondary);">#374357</p>
+                    <small style="color: var(--text-muted);">Fondo terciario</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- UI Components Demo -->
+        <div class="demo-section">
+            <h2 class="mb-4" style="color: var(--primary-color);">Componentes de UI</h2>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h4 style="color: var(--text-primary);">Botones</h4>
+                    <button class="btn btn-primary mr-2">Primario</button>
+                    <button class="btn btn-secondary mr-2">Secundario</button>
+                    <button class="btn btn-outline-primary">Outline</button>
+                    
+                    <div class="accent-demo">
+                        <h5>Colores de Acento</h5>
+                        <p>Este es un ejemplo de como se ven los colores de acento en el nuevo modo oscuro.</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <h4 style="color: var(--text-primary);">Formularios</h4>
+                    <div class="form-group">
+                        <label style="color: var(--text-primary);">Campo de texto</label>
+                        <input type="text" class="form-control" placeholder="Ejemplo de placeholder">
+                    </div>
+                    <div class="form-group">
+                        <label style="color: var(--text-primary);">Área de texto</label>
+                        <textarea class="form-control" rows="3" placeholder="Texto de ejemplo"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cards Demo -->
+        <div class="demo-section">
+            <h2 class="mb-4" style="color: var(--primary-color);">Tarjetas</h2>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 style="color: var(--text-primary);">Encabezado de Tarjeta</h5>
+                        </div>
+                        <div class="card-body">
+                            <p style="color: var(--text-secondary);">Este es el contenido de la tarjeta con el nuevo esquema de colores del modo oscuro.</p>
+                            <button class="btn btn-primary btn-sm">Acción</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 style="color: var(--primary-color);">Tarjeta Simple</h5>
+                            <p style="color: var(--text-secondary);">Una tarjeta sin encabezado para mostrar el contraste de colores.</p>
+                            <div class="progress mb-2">
+                                <div class="progress-bar" style="width: 70%; background: var(--primary-color);">70%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="color-swatch mx-auto mb-3" style="background: var(--accent-100); width: 80px; height: 80px;"></div>
+                            <h5 style="color: var(--accent-100);">Color de Acento</h5>
+                            <p style="color: var(--text-secondary);">Mostrando el color de acento principal.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Typography Demo -->
+        <div class="demo-section">
+            <h2 class="mb-4" style="color: var(--primary-color);">Tipografía</h2>
+            
+            <h1 style="color: var(--text-primary);">Encabezado H1 - Texto Primario</h1>
+            <h2 style="color: var(--text-secondary);">Encabezado H2 - Texto Secundario</h2>
+            <h3 style="color: var(--text-muted);">Encabezado H3 - Texto Tenue</h3>
+            <p style="color: var(--text-primary);">Este es un párrafo con el color de texto primario. La nueva paleta ofrece mejor contraste y legibilidad.</p>
+            <p style="color: var(--text-secondary);">Este es un párrafo con el color de texto secundario, perfecto para información adicional.</p>
+            
+            <div class="alert alert-info mt-3">
+                <strong>¡Nota!</strong> La nueva paleta de colores proporciona un modo oscuro más equilibrado y fácil de leer.
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
+    <script src="assets/js/theme.js"></script>
+    
+    <script>
+        function toggleTheme() {
+            window.themeManager.toggleTheme();
+        }
+        
+        // Initialize theme on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Theme is already initialized by theme.js
+            console.log('Dark mode demo loaded with new color palette');
+        });
+    </script>
+</body>
+</html>

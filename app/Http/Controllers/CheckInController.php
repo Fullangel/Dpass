@@ -240,6 +240,10 @@ class CheckInController extends Controller
             $reg_no = $data2 . $data1 . $data . '1';
         }
         if ($request->session()->get('is_returned') == false || empty($request->session()->get('is_returned'))) {
+            // Obtener el usuario autenticado para asignar creador/editor
+            $currentUser = Auth::user();
+            $userId = $currentUser ? $currentUser->id : 1;
+            
             $input['first_name']                 = $getVisitor['first_name'];
             $input['last_name']                  = $getVisitor['last_name'];
             $input['email']                      = isset($getVisitor['email']) ? $getVisitor['email'] : "";
@@ -249,10 +253,10 @@ class CheckInController extends Controller
             $input['national_identification_no'] = $getVisitor['national_identification_no'] ? $getVisitor['national_identification_no'] : "";
             $input['is_pre_register']            = false;
             $input['status']                     = Status::ACTIVE;
-            $input['creator_id']                 = 1;
+            $input['creator_id']                 = $userId;
             $input['creator_type']               = 'App\Models\User';
             $input['editor_type']                = 'App\Models\User';
-            $input['editor_id']                  = 1;
+            $input['editor_id']                  = $userId;
             //Qrcode Genarate
             $file_name = 'qrcode-' . preg_replace("/[^0-9]/", "", $getVisitor['phone']) . '.png';
             $input['barcode']   = $file_name;
@@ -278,17 +282,26 @@ class CheckInController extends Controller
 
 
         if ($visitor) {
+            // Obtener la información del empleado para asignar region y sede
+            $employee = Employee::find($getVisitor['employee_id']);
+            
+            // Obtener el usuario autenticado para asignar creador/editor
+            $currentUser = Auth::user();
+            $userId = $currentUser ? $currentUser->id : 1;
+            
             $visiting['reg_no']       = $reg_no;
             $visiting['purpose']      = $getVisitor['purpose'];
             $visiting['company_name'] = $getVisitor['company_name'];
             $visiting['employee_id']  = $getVisitor['employee_id'];
             $visiting['visitor_id']   = $visitor->id;
+            $visiting['region_id']    = $employee ? $employee->region_id : null;
+            $visiting['headquarters_id'] = $employee ? $employee->headquarters_id : null;
             $visiting['status']       = VisitorStatus::PENDDING;
             $visiting['user_id']      = $getVisitor['employee_id'];
-            $visiting['creator_id']   = 1;
+            $visiting['creator_id']   = $userId;
             $visiting['creator_type'] = 'App\Models\User';
             $visiting['editor_type']  = 'App\Models\User';
-            $visiting['editor_id']    = 1;
+            $visiting['editor_id']    = $userId;
             $visitingDetails          = VisitingDetails::create($visiting);
             if ($imageName) {
                 $visitingDetails->addMedia($imageName)->toMediaCollection('visitor');

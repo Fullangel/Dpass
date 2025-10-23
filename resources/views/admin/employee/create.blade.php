@@ -184,14 +184,19 @@ $(document).ready(function() {
                                 <div class="form-group col">
                                     <label for="region_id">{{ __('region.region') }} <span class="text-danger">*</span></label>
                                     <select id="region_id" name="region_id"
-                                        class="form-control @error('region_id') is-invalid @enderror" required>
+                                        class="form-control @error('region_id') is-invalid @enderror" required
+                                        @if(isset($is_supervisor) && $is_supervisor) disabled @endif>
                                         <option value="">{{ __('region.select_region') }}</option>
                                         @foreach($regions as $region)
                                         <option value="{{ $region->id }}"
-                                            {{ (old('region_id') == $region->id) ? 'selected' : '' }}>
+                                            @if(isset($is_supervisor) && $is_supervisor && $supervisor_region_id == $region->id) selected
+                                            @elseif(old('region_id') == $region->id) selected @endif>
                                             {{ $region->name }}</option>
                                         @endforeach
                                     </select>
+                                    @if(isset($is_supervisor) && $is_supervisor)
+                                    <input type="hidden" name="region_id" value="{{ $supervisor_region_id }}">
+                                    @endif
                                     @error('region_id')
                                     <div class="invalid-feedback">
                                         {{ $message }}
@@ -201,14 +206,19 @@ $(document).ready(function() {
                                 <div class="form-group col">
                                     <label for="headquarters_id">{{ __('headquarters.headquarters') }} <span class="text-danger">*</span></label>
                                     <select id="headquarters_id" name="headquarters_id"
-                                        class="form-control @error('headquarters_id') is-invalid @enderror" required>
+                                        class="form-control @error('headquarters_id') is-invalid @enderror" required
+                                        @if(isset($is_supervisor) && $is_supervisor) disabled @endif>
                                         <option value="">{{ __('headquarters.select_headquarters') }}</option>
                                         @foreach($headquarters as $headquarter)
                                         <option value="{{ $headquarter->id }}" data-region="{{ $headquarter->region_id }}"
-                                            {{ (old('headquarters_id') == $headquarter->id) ? 'selected' : '' }}>
+                                            @if(isset($is_supervisor) && $is_supervisor && $supervisor_headquarters_id == $headquarter->id) selected
+                                            @elseif(old('headquarters_id') == $headquarter->id) selected @endif>
                                             {{ $headquarter->name }}</option>
                                         @endforeach
                                     </select>
+                                    @if(isset($is_supervisor) && $is_supervisor)
+                                    <input type="hidden" name="headquarters_id" value="{{ $supervisor_headquarters_id }}">
+                                    @endif
                                     @error('headquarters_id')
                                     <div class="invalid-feedback">
                                         {{ $message }}
@@ -255,6 +265,23 @@ $(document).ready(function() {
                                     </div>
                                     @enderror
                                 </div>
+                                @if($is_admin)
+                                <div class="form-group col">
+                                    <label for="role_id">{{ __('employee.role') }}</label> <span class="text-danger">*</span>
+                                    <select id="role_id" name="role_id" class="form-control @error('role_id') is-invalid @enderror">
+                                        <option value="">{{ __('employee.select_role') }}</option>
+                                        @foreach($roles as $role)
+                                        <option value="{{ $role->id }}" {{ (old('role_id') == $role->id) ? 'selected' : '' }}>
+                                            {{ $role->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('role_id')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                    @enderror
+                                </div>
+                                @endif
                             </div>
 
                             <div class="form-row">

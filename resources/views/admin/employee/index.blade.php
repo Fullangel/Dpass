@@ -13,12 +13,12 @@
             <div class="col-12">
                 <div class="card">
 
-                    @can('employees_create')
+                    @canany(['employees_create', 'employees_create_headquarters'])
                         <div class="card-header">
                             <a href="{{ route('admin.employees.create') }}" class="btn btn-icon icon-left btn-primary"><i
                                     class="fas fa-plus"></i> {{ __('employee.add_employee') }}</a>
                         </div>
-                    @endcan
+                    @endcanany
 
                     <div class="card-body">
                         <div class="table-responsive">

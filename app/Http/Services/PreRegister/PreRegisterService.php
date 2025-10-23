@@ -18,8 +18,12 @@ class PreRegisterService
 
     public function all()
     {
-        if (auth()->user()->getrole->name == 'Employee') {
-            return PreRegister::where(['employee_id' => auth()->user()->employee->id])->orderBy('id', 'desc')->get();
+        $user = auth()->user();
+        
+        if ($user->getrole->name == 'Employee') {
+            return PreRegister::where(['employee_id' => $user->employee->id])->orderBy('id', 'desc')->get();
+        } else if ($user->hasRole('supervisor')) {
+            return PreRegister::where('headquarters_id', $user->employee->headquarters_id)->orderBy('id', 'desc')->get();
         } else {
             return PreRegister::orderBy('id', 'desc')->get();
         }
@@ -31,8 +35,12 @@ class PreRegisterService
      */
     public function find($id)
     {
-        if (auth()->user()->getrole->name == 'Employee') {
-            return PreRegister::where(['id' => $id, 'employee_id' => auth()->user()->employee->id])->first();
+        $user = auth()->user();
+        
+        if ($user->getrole->name == 'Employee') {
+            return PreRegister::where(['id' => $id, 'employee_id' => $user->employee->id])->first();
+        } else if ($user->hasRole('supervisor')) {
+            return PreRegister::where(['id' => $id, 'headquarters_id' => $user->employee->headquarters_id])->first();
         } else {
             return PreRegister::find($id);
         }
@@ -78,6 +86,10 @@ class PreRegisterService
     public function make($request)
     {
 
+        // Obtener el usuario autenticado para asignar creador/editor
+        $currentUser = auth()->user();
+        $userId = $currentUser ? $currentUser->id : 1;
+        
         $input['first_name']                 = $request->input('first_name');
         $input['last_name']                  = $request->input('last_name');
         $input['email']                      = $request->input('email');
@@ -87,10 +99,10 @@ class PreRegisterService
         $input['address']                    = $request->input('address');
         $input['is_pre_register']            = true;
         $input['status']                     = Status::ACTIVE;
-        $input['creator_id']                 = 1;
+        $input['creator_id']                 = $userId;
         $input['creator_type']               = 'App\Models\User';
         $input['editor_type']                = 'App\Models\User';
-        $input['editor_id']                  = 1;
+        $input['editor_id']                  = $userId;
 
         $file_name = 'qrcode-' . preg_replace("/[^0-9]/", "", $request->input('phone')) . '.png';
         $input['barcode']                    = $file_name;
@@ -110,7 +122,12 @@ class PreRegisterService
             $preArray['expected_time']  = date('H:i:s', strtotime($request->input('expected_time')));
             $preArray['comment']        = $request->input('comment');
             $preArray['visitor_id']     = $visitor->id;
-            $preArray['employee_id']     = $employee_id;
+            $preArray['employee_id']    = $employee_id;
+            
+            if (auth()->user()->hasRole('supervisor')) {
+                $preArray['headquarters_id'] = auth()->user()->employee->headquarters_id;
+            }
+            
             $result = PreRegister::create($preArray);
 
 
@@ -132,6 +149,10 @@ class PreRegisterService
     {
         $pre_register = PreRegister::findOrFail($id);
 
+        // Obtener el usuario autenticado para asignar creador/editor
+        $currentUser = auth()->user();
+        $userId = $currentUser ? $currentUser->id : 1;
+        
         $input['first_name']                 = $request->input('first_name');
         $input['last_name']                  = $request->input('last_name');
         $input['email']                      = $request->input('email');
@@ -142,10 +163,10 @@ class PreRegisterService
         $input['national_identification_no'] = $request->input('national_identification_no');
         $input['is_pre_register']            = true;
         $input['status']                     = Status::ACTIVE;
-        $input['creator_id']                 = 1;
+        $input['creator_id']                 = $userId;
         $input['creator_type']               = 'App\Models\User';
         $input['editor_type']                = 'App\Models\User';
-        $input['editor_id']                  = 1;
+        $input['editor_id']                  = $userId;
 
         $file_name = 'qrcode-' . preg_replace("/[^0-9]/", "", $request->input('phone')) . '.png';
         $input['barcode']                    = $file_name;
@@ -162,7 +183,12 @@ class PreRegisterService
             $preArray['expected_date']  = $request->input('expected_date');
             $preArray['expected_time']  = date('H:i:s', strtotime($request->input('expected_time')));
             $preArray['comment']        = $request->input('comment');
-            $preArray['employee_id'] = $employee_id;
+            $preArray['employee_id']    = $employee_id;
+            
+            if (auth()->user()->hasRole('supervisor')) {
+                $preArray['headquarters_id'] = auth()->user()->employee->headquarters_id;
+            }
+            
             $pre_register->update($preArray);
             try {
                 $pre_register->visitor->notify(new SendInvitationToVisitors($pre_register));

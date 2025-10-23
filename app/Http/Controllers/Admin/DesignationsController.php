@@ -6,7 +6,9 @@ use App\Enums\Status;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DesignationsRequest;
 use App\Models\Designation;
+use App\Models\Headquarters;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Yajra\DataTables\DataTables;
 
@@ -18,10 +20,10 @@ class DesignationsController extends Controller
         $this->middleware('auth');
         $this->data['sitetitle'] = 'Designations';
 
-        $this->middleware(['permission:designations'])->only('index');
-        $this->middleware(['permission:designations_create'])->only('create', 'store');
-        $this->middleware(['permission:designations_edit'])->only('edit', 'update');
-        $this->middleware(['permission:designations_delete'])->only('destroy');
+        $this->middleware(['permission:designations|designations_headquarters'])->only('index');
+        $this->middleware(['permission:designations_create|designations_create_headquarters'])->only('create', 'store');
+        $this->middleware(['permission:designations_edit|designations_edit_headquarters'])->only('edit', 'update');
+        $this->middleware(['permission:designations_delete|designations_delete_headquarters'])->only('destroy');
     }
 
     /**
@@ -41,6 +43,15 @@ class DesignationsController extends Controller
      */
     public function create()
     {
+        $user = Auth::user();
+        
+        if ($user->hasRole('supervisor')) {
+            $headquarters = Headquarters::where('id', $user->headquarters_id)->get();
+        } else {
+            $headquarters = Headquarters::all();
+        }
+        
+        $this->data['headquarters'] = $headquarters;
         return view('admin.designation.create', $this->data);
     }
 
@@ -54,6 +65,12 @@ class DesignationsController extends Controller
     public function store(DesignationsRequest $request)
     {
         $input = $request->all();
+        
+        $user = Auth::user();
+        if ($user->hasRole('supervisor')) {
+            $input['headquarters_id'] = $user->headquarters_id;
+        }
+        
         Designation::create($input);
 
         return redirect()->route('admin.designations.index')->with('success','Designations created successfully');
@@ -107,8 +124,15 @@ class DesignationsController extends Controller
 
     public function getDesignations(Request $request)
     {
-
-        $designations = Designation::orderBy('id', 'desc')->get();
+        $user = Auth::user();
+        
+        $query = Designation::query();
+        
+        if ($user->hasRole('supervisor')) {
+            $query->where('headquarters_id', $user->headquarters_id);
+        }
+        
+        $designations = $query->orderBy('id', 'desc')->get();
 
         $i         = 1;
         $designationArray = [];
@@ -124,11 +148,11 @@ class DesignationsController extends Controller
             ->addColumn('action', function ($designation) {
                 $retAction = '';
 
-                if(auth()->user()->can('designations_edit')) {
+                if(auth()->user()->can('designations_edit') || auth()->user()->can('designations_edit_headquarters')) {
                     $retAction .= '<a href="' . route('admin.designations.edit', $designation) . '" class="btn btn-sm btn-icon float-left btn-primary" data-toggle="tooltip" data-placement="top" title="Edit"><i class="far fa-edit"></i></a>';
                 }
 
-                if(auth()->user()->can('designations_delete')) {
+                if(auth()->user()->can('designations_delete') || auth()->user()->can('designations_delete_headquarters')) {
                     $retAction .= '<form class="float-left pl-2" action="' . route('admin.designations.destroy', $designation) . '" method="POST">' . method_field('DELETE') . csrf_field() . '<button class="btn btn-sm btn-icon btn-danger delete" data-toggle="tooltip" data-placement="top" title="Delete"><i class="fa fa-trash"></i></button></form>';
                 }
                 return $retAction;

@@ -19,7 +19,7 @@ use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\AttendanceController;
 use App\Http\Controllers\Admin\DepartmentsController;
-use App\Http\Controllers\Admin\RegionController;
+
 use App\Http\Controllers\Admin\PreRegisterController;
 use App\Http\Controllers\Admin\DesignationsController;
 use App\Http\Controllers\Admin\LocalizationController;
@@ -59,53 +59,65 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'installed', 'backen
     Route::resource('role', RoleController::class);
     Route::post('role/save-permission/{id}', [RoleController::class, 'savePermission'])->name('role.save-permission');
 
-    //designations
-    Route::resource('designations', DesignationsController::class);
-    Route::get('get-designations', [DesignationsController::class, 'getDesignations'])->name('designations.get-designations');
+    //designations - Apply supervisor headquarters scope
+    Route::group(['middleware' => ['supervisor.scope:designations']], function () {
+        Route::resource('designations', DesignationsController::class);
+        Route::get('get-designations', [DesignationsController::class, 'getDesignations'])->name('designations.get-designations');
+    });
 
-    //departments
-    Route::resource('departments', DepartmentsController::class);
-    Route::get('get-departments', [DepartmentsController::class, 'getDepartments'])->name('departments.get-departments');
+    //departments - Apply supervisor headquarters scope
+    Route::group(['middleware' => ['supervisor.scope:departments']], function () {
+        Route::resource('departments', DepartmentsController::class);
+        Route::get('get-departments', [DepartmentsController::class, 'getDepartments'])->name('departments.get-departments');
+    });
 
-    //regions
-    Route::resource('regions', RegionController::class);
-    Route::get('get-regions', [RegionController::class, 'getRegions'])->name('regions.get-regions');
+
 
     //headquarters (sedes)
     Route::resource('headquarters', \App\Http\Controllers\Admin\HeadquartersController::class);
     Route::get('get-headquarters', [\App\Http\Controllers\Admin\HeadquartersController::class, 'getHeadquarters'])->name('headquarters.get-headquarters');
+    Route::get('get-headquarters-by-region', [\App\Http\Controllers\Admin\HeadquartersController::class, 'getHeadquartersByRegion'])->name('headquarters.get-by-region');
 
     //web-token
     Route::post('store-token', [WebNotificationController::class, 'store'])->name('store.token');
 
-    //employee route
-    Route::resource('employees', EmployeeController::class);
-    Route::get('get-employees', [EmployeeController::class, 'getEmployees'])->name('employees.get-employees');
-    Route::get('employees/get-pre-registers/{id}', [EmployeeController::class, 'getPreRegister'])->name('employees.get-pre-registers');
-    Route::get('employees/get-visitors/{id}', [EmployeeController::class, 'getVisitor'])->name('employees.get-visitors');
-    Route::put('employees/check/{id}', [EmployeeController::class, 'checkEmployee'])->name('employees.check');
+    //employee route - Apply supervisor headquarters scope
+    Route::group(['middleware' => ['supervisor.scope:employees']], function () {
+        Route::resource('employees', EmployeeController::class);
+        Route::get('get-employees', [EmployeeController::class, 'getEmployees'])->name('employees.get-employees');
+        Route::get('employees/get-pre-registers/{id}', [EmployeeController::class, 'getPreRegister'])->name('employees.get-pre-registers');
+        Route::get('employees/get-visitors/{id}', [EmployeeController::class, 'getVisitor'])->name('employees.get-visitors');
+        Route::put('employees/check/{id}', [EmployeeController::class, 'checkEmployee'])->name('employees.check');
+    });
 
-    //pre-registers
-    Route::resource('pre-registers', PreRegisterController::class);
-    Route::get('get-pre-registers', [PreRegisterController::class, 'getPreRegister'])->name('pre-registers.get-pre-registers');
+    //pre-registers - Apply supervisor headquarters scope
+    Route::group(['middleware' => ['supervisor.scope:pre-registers']], function () {
+        Route::resource('pre-registers', PreRegisterController::class);
+        Route::get('get-pre-registers', [PreRegisterController::class, 'getPreRegister'])->name('pre-registers.get-pre-registers');
+    });
 
-    //visitors
-    Route::resource('visitors', VisitorController::class);
-    Route::post('visitor/search', [VisitorController::class, 'search'])->name('visitor.search');
-    Route::get('visitor/check-out/{visitingDetail}', [VisitorController::class, 'checkout'])->name('visitors.checkout');
-    Route::get('visitor/change-status/{id}/{status}/{dashboard}',  [VisitorController::class, 'changeStatus'])->name('visitor.change-status');
-    Route::get('get-visitors', [VisitorController::class, 'getVisitor'])->name('visitors.get-visitors');
-    Route::get('visitor/disable/{id}',  [VisitorController::class, 'visitorDisable'])->name('visitors.disable');
+    //visitors - Apply supervisor headquarters scope
+    Route::group(['middleware' => ['supervisor.scope:visitors']], function () {
+        Route::resource('visitors', VisitorController::class);
+        Route::post('visitor/search', [VisitorController::class, 'search'])->name('visitor.search');
+        Route::get('visitor/check-out/{visitingDetail}', [VisitorController::class, 'checkout'])->name('visitors.checkout');
+        Route::get('visitor/change-status/{id}/{status}/{dashboard}',  [VisitorController::class, 'changeStatus'])->name('visitor.change-status');
+        Route::get('get-visitors', [VisitorController::class, 'getVisitor'])->name('visitors.get-visitors');
+        Route::get('visitor/disable/{id}',  [VisitorController::class, 'visitorDisable'])->name('visitors.disable');
+        Route::get('visitor/get-employee-region-headquarters', [VisitorController::class, 'getEmployeeRegionHeadquarters'])->name('visitor.get-employee-region-headquarters');
+    });
 
-    //report
-    Route::get('admin-visitor-report', [VisitorReportController::class, 'index'])->name('admin-visitor-report.index');
-    Route::post('admin-visitor-report', [VisitorReportController::class, 'index'])->name('admin-visitor-report.post');
+    //report - Apply supervisor headquarters scope
+    Route::group(['middleware' => ['supervisor.scope:reports']], function () {
+        Route::get('admin-visitor-report', [VisitorReportController::class, 'index'])->name('admin-visitor-report.index');
+        Route::post('admin-visitor-report', [VisitorReportController::class, 'index'])->name('admin-visitor-report.post');
 
-    Route::get('admin-pre-registers-report', [PreRegistersReportController::class, 'index'])->name('admin-pre-registers-report.index');
-    Route::post('admin-pre-registers-report', [PreRegistersReportController::class, 'index'])->name('admin-pre-registers-report.post');
+        Route::get('admin-pre-registers-report', [PreRegistersReportController::class, 'index'])->name('admin-pre-registers-report.index');
+        Route::post('admin-pre-registers-report', [PreRegistersReportController::class, 'index'])->name('admin-pre-registers-report.post');
 
-    Route::get('attendance-report', [AttendanceReportController::class, 'index'])->name('attendance-report.index');
-    Route::post('attendance-report', [AttendanceReportController::class, 'index'])->name('attendance-report.post');
+        Route::get('attendance-report', [AttendanceReportController::class, 'index'])->name('attendance-report.index');
+        Route::post('attendance-report', [AttendanceReportController::class, 'index'])->name('attendance-report.post');
+    });
 
     Route::post('admin-attendance/clockin', [AttendanceController::class, 'clockIn'])->name('attendance.clockin');
     Route::post('admin-attendance/clockout', [AttendanceController::class, 'clockOut'])->name('attendance.clockout');

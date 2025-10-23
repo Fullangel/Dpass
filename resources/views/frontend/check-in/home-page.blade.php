@@ -33,8 +33,8 @@
                 <div class="row justify-content-center mt-4">
                     <div class="col-md-8">
                         <div class="card border-danger shadow-lg">
-                            <div class="card-header bg-danger text-white text-center">
-                                <h3 class="mb-0">
+                            <div class="card-header bg-danger text-center">
+                                <h3 class="mb-0 text-danger">
                                     <i class="fas fa-ban mr-2"></i>
                                     ACCESO DENEGADO
                                 </h3>
@@ -42,7 +42,7 @@
                             <div class="card-body text-center p-4">
                                 @if(session('blocked_visitor')->image)
                                     <div class="mb-3">
-                                        <img src="{{ asset('images/visitors/' . session('blocked_visitor')->image) }}" 
+                                        <img src="{{ session('blocked_visitor')->image }}"
                                              alt="Foto del visitante" 
                                              class="rounded-circle border border-danger" 
                                              style="width: 120px; height: 120px; object-fit: cover;">
@@ -58,7 +58,7 @@
                                 
                                 <h4 class="text-danger mb-3">
                                     El/La visitante <strong>{{ session('blocked_visitor')->first_name }} {{ session('blocked_visitor')->last_name }}</strong> 
-                                    tiene bloqueada la entrada al SENIAT
+                                    tiene prohibida la entrada al SENIAT
                                 </h4>
                                 
                                 <div class="alert alert-danger border-0 mb-3">

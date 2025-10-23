@@ -39,10 +39,13 @@ class EmployeeUpdateRequest extends FormRequest
             'email'                     => $email,
             'department_id'             => 'required|numeric',
             'designation_id'            => 'required|numeric',
+            'region_id'                 => 'required|numeric|exists:regions,id',
+            'headquarters_id'           => 'required|numeric|exists:headquarters,id',
             'gender'                    => 'required|numeric',
             'date_of_joining'           => 'required',
             'about'                     => 'nullable|max:255',
             'image'                     => 'image|mimes:jpeg,png,jpg|max:5098',
+            'role_id'                   => 'nullable|exists:roles,id|not_in:' . \Spatie\Permission\Models\Role::where('name', 'Admin')->first()->id ?? 1,
         ];
     }
 }

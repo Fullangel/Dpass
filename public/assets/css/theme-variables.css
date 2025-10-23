@@ -1,0 +1,203 @@
+/**
+ * Theme Variables CSS
+ * Defines CSS custom properties for light and dark themes
+ */
+
+/* Light Theme Variables (Default) */
+:root {
+    /* Primary Colors */
+    --primary-color: #6777ef;
+    --primary-hover: #5a67d8;
+    --primary-light: rgba(103, 119, 239, 0.1);
+    
+    /* Secondary Colors */
+    --secondary-color: #6c757d;
+    --secondary-hover: #5a6268;
+    
+    /* Background Colors */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #e9ecef;
+    --bg-card: #ffffff;
+    --bg-sidebar: #ffffff;
+    --bg-navbar: #ffffff;
+    
+    /* Text Colors */
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --text-muted: #868e96;
+    --text-inverse: #ffffff;
+    
+    /* Border Colors */
+    --border-primary: #dee2e6;
+    --border-secondary: #e9ecef;
+    --border-light: #f1f3f4;
+    
+    /* Shadow Colors */
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --shadow-hover: rgba(0, 0, 0, 0.15);
+    
+    /* Status Colors */
+    --success-color: #47c363;
+    --warning-color: #ffa426;
+    --danger-color: #fc544b;
+    --info-color: #3abaf4;
+    
+    /* Form Elements */
+    --input-bg: #ffffff;
+    --input-border: #ced4da;
+    --input-focus-border: #6777ef;
+    --input-placeholder: #6c757d;
+    
+    /* Table Colors */
+    --table-bg: #ffffff;
+    --table-border: #dee2e6;
+    --table-hover: #f8f9fa;
+    --table-stripe: #f8f9fa;
+    
+    /* Modal Colors */
+    --modal-bg: #ffffff;
+    --modal-header-bg: #f8f9fa;
+    --modal-footer-bg: #f8f9fa;
+    
+    /* Code Colors */
+    --code-bg: #f8f9fa;
+    --code-text: #e83e8c;
+}
+
+/* Dark Theme Variables */
+[data-theme="dark"] {
+    /* Primary Colors */
+    --primary-color: #4A5D7A;
+    --primary-hover: #5A6D8A;
+    --primary-light: rgba(74, 93, 122, 0.1);
+    
+    /* Secondary Colors */
+    --secondary-color: #6B7B96;
+    --secondary-hover: #7B8BA6;
+    
+    /* Accent Colors */
+    --accent-100: #8FA3C1;
+    --accent-200: #B8C5D9;
+    
+    /* Background Colors */
+    --bg-primary: #1E2433;
+    --bg-secondary: #252B3D;
+    --bg-tertiary: #2E3447;
+    --bg-card: #252B3D;
+    --bg-sidebar: #252B3D;
+    --bg-navbar: #252B3D;
+    
+    /* Text Colors */
+    --text-primary: #E8EAEF;
+    --text-secondary: #C4C9D8;
+    --text-muted: #9AA5B8;
+    --text-inverse: #1E2433;
+    
+    /* Border Colors */
+    --border-primary: #2E3447;
+    --border-secondary: #3E4559;
+    --border-light: #5A657C;
+    
+    /* Shadow Colors */
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --shadow-hover: rgba(0, 0, 0, 0.4);
+    
+    /* Status Colors */
+    --success-color: #6BC77A;
+    --warning-color: #E6B566;
+    --danger-color: #E67E7E;
+    --info-color: #7BB3E6;
+    
+    /* Form Elements */
+    --input-bg: #252B3D;
+    --input-border: #2E3447;
+    --input-focus-border: #4A5D7A;
+    --input-placeholder: #9AA5B8;
+    
+    /* Table Colors */
+    --table-bg: #252B3D;
+    --table-border: #3A4157;
+    --table-hover: #2E3447;
+    --table-stripe: #2A3145;
+    --table-header-bg: #2E3447;
+    --table-header-text: #E8EAEF;
+    --table-border-strong: #4A5D7A;
+    --table-shadow: rgba(74, 93, 122, 0.15);
+    --table-shadow-hover: rgba(74, 93, 122, 0.25);
+    
+    /* Modal Colors */
+    --modal-bg: #252B3D;
+    --modal-header-bg: #2E3447;
+    --modal-footer-bg: #2E3447;
+    
+    /* Code Colors */
+    --code-bg: #2E3447;
+    --code-text: #E8EAEF;
+}
+
+/* Theme Transition */
+* {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Theme Toggle Button Styles */
+.theme-toggle {
+    background: var(--primary-color);
+    border: none;
+    color: var(--text-inverse);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px var(--shadow-color);
+}
+
+.theme-toggle:hover {
+    background: var(--primary-hover);
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px var(--shadow-hover);
+}
+
+.theme-toggle:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--primary-light);
+}
+
+.theme-toggle i {
+    font-size: 18px;
+    transition: transform 0.3s ease;
+}
+
+.theme-toggle:hover i {
+    transform: rotate(180deg);
+}
+
+/* Theme Toggle in Navigation */
+.navbar-nav .theme-toggle {
+    margin: 0 10px;
+    background: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--border-primary);
+}
+
+.navbar-nav .theme-toggle:hover {
+    background: var(--primary-light);
+    color: var(--primary-color);
+}
+
+/* Responsive Theme Toggle */
+@media (max-width: 768px) {
+    .theme-toggle {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .theme-toggle i {
+        font-size: 16px;
+    }
+}

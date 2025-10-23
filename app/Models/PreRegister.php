@@ -13,6 +13,7 @@ class PreRegister extends Model
     protected $table = 'pre_registers';
     protected $guarded = ['id'];
     protected $auditColumn = true;
+    protected $fillable = ['headquarters_id'];
 
     protected $fakeColumns = [];
 
@@ -34,6 +35,11 @@ class PreRegister extends Model
     public function employee()
     {
         return $this->belongsTo(Employee::class);
+    }
+
+    public function headquarters()
+    {
+        return $this->belongsTo(Headquarters::class);
     }
 
 }

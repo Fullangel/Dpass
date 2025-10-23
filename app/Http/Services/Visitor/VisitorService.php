@@ -25,13 +25,28 @@ class VisitorService
     {
         $user = auth()->user();
         
-        if (!$user || !$user->getrole || !$user->employee) {
+        if (!$user || !$user->getrole) {
             return VisitingDetails::with('visitor','employee')->orderBy('id', 'desc')->get();
         }
         
         if ($user->getrole->name == 'Employee') {
-            return VisitingDetails::with('visitor','employee')->where(['employee_id' => $user->employee->id])->orderBy('id', 'desc')->get();
+            // Si es empleado, mostrar solo sus propias visitas
+            if ($user->employee) {
+                return VisitingDetails::with('visitor','employee')->where(['employee_id' => $user->employee->id])->orderBy('id', 'desc')->get();
+            } else {
+                // Si no tiene empleado asociado, no mostrar ninguna visita
+                return collect();
+            }
+        } elseif ($user->getrole->name == 'supervisor' || $user->getrole->name == 'Reception') {
+            // Si es supervisor o recepcionista, filtrar por sede
+            if ($user->employee && $user->employee->headquarters_id) {
+                return VisitingDetails::with('visitor','employee')->where(['headquarters_id' => $user->employee->headquarters_id])->orderBy('id', 'desc')->get();
+            } else {
+                // Si no tiene empleado o sede asociada, no mostrar ninguna visita
+                return collect();
+            }
         } else {
+            // Para admin y otros roles, mostrar todas las visitas
             return VisitingDetails::with('visitor','employee')->orderBy('id', 'desc')->get();
         }
     }
@@ -39,13 +54,28 @@ class VisitorService
     {
         $user = auth()->user();
         
-        if (!$user || !$user->getrole || !$user->employee) {
+        if (!$user || !$user->getrole) {
             return VisitingDetails::with('visitor','employee')->orderBy('id', 'desc')->take($number)->get();
         }
         
         if ($user->getrole->name == 'Employee') {
-            return VisitingDetails::with('visitor','employee')->where(['employee_id' => $user->employee->id])->orderBy('id', 'desc')->take($number)->get();
+            // Si es empleado, mostrar solo sus propias visitas
+            if ($user->employee) {
+                return VisitingDetails::with('visitor','employee')->where(['employee_id' => $user->employee->id])->orderBy('id', 'desc')->take($number)->get();
+            } else {
+                // Si no tiene empleado asociado, no mostrar ninguna visita
+                return collect();
+            }
+        } elseif ($user->getrole->name == 'supervisor' || $user->getrole->name == 'Reception') {
+            // Si es supervisor o recepcionista, filtrar por sede
+            if ($user->employee && $user->employee->headquarters_id) {
+                return VisitingDetails::with('visitor','employee')->where(['headquarters_id' => $user->employee->headquarters_id])->orderBy('id', 'desc')->take($number)->get();
+            } else {
+                // Si no tiene empleado o sede asociada, no mostrar ninguna visita
+                return collect();
+            }
         } else {
+            // Para admin y otros roles, mostrar todas las visitas
             return VisitingDetails::with('visitor','employee')->orderBy('id', 'desc')->take($number)->get();
         }
     }
@@ -58,13 +88,28 @@ class VisitorService
     {
         $user = auth()->user();
         
-        if (!$user || !$user->getrole || !$user->employee) {
+        if (!$user || !$user->getrole) {
             return VisitingDetails::find($id);
         }
         
         if ($user->getrole->name == 'Employee') {
-            return VisitingDetails::where(['id' => $id, 'employee_id' => $user->employee->id])->first();
+            // Si es empleado, mostrar solo sus propias visitas
+            if ($user->employee) {
+                return VisitingDetails::where(['id' => $id, 'employee_id' => $user->employee->id])->first();
+            } else {
+                // Si no tiene empleado asociado, no mostrar ninguna visita
+                return null;
+            }
+        } elseif ($user->getrole->name == 'supervisor' || $user->getrole->name == 'Reception') {
+            // Si es supervisor o recepcionista, filtrar por sede
+            if ($user->employee && $user->employee->headquarters_id) {
+                return VisitingDetails::where(['id' => $id, 'headquarters_id' => $user->employee->headquarters_id])->first();
+            } else {
+                // Si no tiene empleado o sede asociada, no mostrar ninguna visita
+                return null;
+            }
         } else {
+            // Para admin y otros roles, mostrar todas las visitas
             return VisitingDetails::find($id);
         }
     }
@@ -126,6 +171,10 @@ class VisitorService
             $reg_no = $data2 . $data1 . $data . '1';
         }
 
+        // Obtener el usuario autenticado para asignar creador/editor
+        $currentUser = auth()->user();
+        $userId = $currentUser ? $currentUser->id : 1;
+        
         $input['first_name'] = $request->input('first_name');
         $input['last_name'] = $request->input('last_name');
         $input['email'] = $request->input('email');
@@ -135,10 +184,10 @@ class VisitorService
         $input['national_identification_no'] = $request->input('national_identification_no');
         $input['is_pre_register'] = false;
         $input['status'] = Status::ACTIVE;
-        $input['creator_id'] = 1;
+        $input['creator_id'] = $userId;
         $input['creator_type'] = 'App\Models\User';
         $input['editor_type'] = 'App\Models\User';
-        $input['editor_id'] = 1;
+        $input['editor_id'] = $userId;
 
         $file_name = 'qrcode-' . preg_replace("/[^0-9]/", "", $request->input('phone')) . '.png';
         $input['barcode']  = $file_name;
@@ -154,10 +203,24 @@ class VisitorService
             $visiting['visitor_id'] = $visitor->id;
             $visiting['status'] = VisitorStatus::PENDDING;
             $visiting['user_id'] = $request->input('employee_id');
-            $visiting['creator_id'] = 1;
+            
+            // Obtener el usuario autenticado
+            $currentUser = auth()->user();
+            
+            // Si el usuario es recepcionista o supervisor y tiene empleado asociado, asignar automáticamente su sede y región
+            if ($currentUser && $currentUser->employee && ($currentUser->hasRole('Reception') || $currentUser->hasRole('supervisor'))) {
+                $visiting['region_id'] = $currentUser->employee->region_id;
+                $visiting['headquarters_id'] = $currentUser->employee->headquarters_id;
+            } else {
+                // Para otros usuarios, tomar del request como antes
+                $visiting['region_id'] = $request->input('region_id');
+                $visiting['headquarters_id'] = $request->input('headquarters_id');
+            }
+            
+            $visiting['creator_id'] = $userId;
             $visiting['creator_type'] = 'App\Models\User';
             $visiting['editor_type'] = 'App\Models\User';
-            $visiting['editor_id'] = 1;
+            $visiting['editor_id'] = $userId;
             $visitingDetails = VisitingDetails::create($visiting);
             if ($request->file('image')) {
                 $visitingDetails->addMedia($request->file('image'))->toMediaCollection('visitor');
@@ -218,6 +281,20 @@ class VisitorService
             $visiting['visitor_id'] = $visitingDetails->visitor->id;
             $visiting['status'] = Status::ACTIVE;
             $visiting['user_id'] = $request->input('employee_id');
+            
+            // Obtener el usuario autenticado
+            $currentUser = auth()->user();
+            
+            // Si el usuario es recepcionista o supervisor y tiene empleado asociado, mantener su sede y región actual
+            if ($currentUser && $currentUser->employee && ($currentUser->hasRole('Reception') || $currentUser->hasRole('supervisor'))) {
+                $visiting['region_id'] = $visitingDetails->region_id; // Mantener la región actual
+                $visiting['headquarters_id'] = $visitingDetails->headquarters_id; // Mantener la sede actual
+            } else {
+                // Para otros usuarios, tomar del request como antes
+                $visiting['region_id'] = $request->input('region_id');
+                $visiting['headquarters_id'] = $request->input('headquarters_id');
+            }
+            
             $visitingDetails->update($visiting);
         }
 
@@ -278,6 +355,20 @@ class VisitorService
             $visiting['visitor_id'] = $visitor->id;
             $visiting['status'] = VisitorStatus::PENDDING;
             $visiting['user_id'] = $request->input('employee_id');
+            
+            // Obtener el usuario autenticado
+            $currentUser = auth()->user();
+            
+            // Si el usuario es recepcionista o supervisor y tiene empleado asociado, asignar automáticamente su sede y región
+            if ($currentUser && $currentUser->employee && ($currentUser->hasRole('Reception') || $currentUser->hasRole('supervisor'))) {
+                $visiting['region_id'] = $currentUser->employee->region_id;
+                $visiting['headquarters_id'] = $currentUser->employee->headquarters_id;
+            } else {
+                // Para otros usuarios, tomar del request como antes
+                $visiting['region_id'] = $request->input('region_id');
+                $visiting['headquarters_id'] = $request->input('headquarters_id');
+            }
+            
             $visiting['creator_id'] = 1;
             $visiting['creator_type'] = 'App\Models\User';
             $visiting['editor_type'] = 'App\Models\User';

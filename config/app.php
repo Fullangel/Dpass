@@ -197,6 +197,7 @@ return [
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
+        // App\Providers\SSLServiceProvider::class, // SSL Support Provider - Desactivado temporalmente
         Barryvdh\TranslationManager\TranslationServiceProvider::class,
         Brotzka\DotenvEditor\DotenvEditorServiceProvider::class,
         Jackiedo\Timezonelist\TimezonelistServiceProvider::class,

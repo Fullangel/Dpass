@@ -16,7 +16,7 @@ class IsHasBackendPermission
      */
     public function handle($request, Closure $next)
     {
-        $permissionRole = [1, 2, 3];
+        $permissionRole = [1, 2, 3, 5]; // Admin, Employee, Reception, Supervisor
         if (Auth::user() && in_array(Auth::user()->myrole, $permissionRole)) {
             return $next($request);
         }

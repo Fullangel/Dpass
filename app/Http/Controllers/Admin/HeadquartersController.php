@@ -160,4 +160,20 @@ class HeadquartersController extends Controller
         $headquarter->delete();
         return redirect()->route('admin.headquarters.index')->with('success', 'Sede eliminada exitosamente.');
     }
+
+    public function getHeadquartersByRegion(Request $request)
+    {
+        $region_id = $request->input('region_id');
+        
+        if (!$region_id) {
+            return response()->json([]);
+        }
+        
+        $headquarters = Headquarters::where('region_id', $region_id)
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+        
+        return response()->json($headquarters);
+    }
 }

@@ -46,6 +46,16 @@ class VisitingDetails extends Model implements  HasMedia
         return $this->belongsTo(Employee::class, 'employee_id');
     }
 
+    public function region()
+    {
+        return $this->belongsTo(Region::class, 'region_id');
+    }
+
+    public function headquarters()
+    {
+        return $this->belongsTo(Headquarters::class, 'headquarters_id');
+    }
+
     public function attendance()
     {
         return $this->hasMany(Attendance::class, 'employee_id');
@@ -59,7 +69,7 @@ class VisitingDetails extends Model implements  HasMedia
     public function getImagesAttribute()
     {
         if (!empty($this->getFirstMediaUrl('visitor'))) {
-            return asset($this->getFirstMediaUrl('visitor'));
+            return $this->getFirstMediaUrl('visitor');
         }
         return asset('assets/img/default/user.png');
     }

@@ -39,6 +39,7 @@ class EmployeeRequest extends FormRequest
             'date_of_joining'           => 'required',
             'about'                     => 'nullable|max:255',
             'image'                     => 'image|mimes:jpeg,png,jpg|max:5098',
+            'role_id'                   => 'nullable|exists:roles,id|not_in:' . \Spatie\Permission\Models\Role::where('name', 'Admin')->first()->id ?? 1,
         ];
     }
 }

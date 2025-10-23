@@ -11,6 +11,9 @@
 <script src="{{ asset('assets/modules/izitoast/dist/js/iziToast.min.js') }}"></script>
 @yield('scripts')
 
+<!-- Theme JS -->
+<script src="{{ asset('assets/js/theme.js') }}"></script>
+
 <!-- Template JS File -->
 <script src="{{ asset('assets/js/scripts.js') }}"></script>
 <script src="{{ asset('js/custom.js') }}"></script>

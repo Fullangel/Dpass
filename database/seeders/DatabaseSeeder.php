@@ -31,5 +31,6 @@ class DatabaseSeeder extends Seeder
         $this->call(DepartmentTableSeeder::class);
         $this->call(DesignationTableSeeder::class);
         $this->call(LanguageSeeder::class);
+        $this->call(SupervisorRoleSeeder::class);
     }
 }

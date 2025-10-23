@@ -9,7 +9,7 @@ class Designation extends Model
     protected $table = 'designations';
     protected $guarded = ['id'];
     protected $fillable = [
-        'name','status'
+        'name','status','headquarters_id'
     ];
     protected $fakeColumns = [];
 
@@ -18,4 +18,9 @@ class Designation extends Model
     protected $casts = [ 
         
     ];
+
+    public function headquarters()
+    {
+        return $this->belongsTo(Headquarters::class);
+    }
 }

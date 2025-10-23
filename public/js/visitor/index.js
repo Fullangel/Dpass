@@ -23,11 +23,11 @@ function load_data(status = '',requests='') {
       {data : 'visitor_id', name : 'visitor_id'},
       {data : 'name', name : 'name'},
       {data : 'employee_id', name : 'employee_id'},
-    
+      {data : 'location', name : 'location'},
       {data : 'date', name : 'date'},
       {data : 'checkout', name : 'checkout'},
       {data : 'status', name : 'status'},
-      {data : 'action', name : 'action'},
+      {data : 'action', name : 'action'}
     ],
     "ordering" : false
   });

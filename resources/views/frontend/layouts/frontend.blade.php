@@ -26,7 +26,12 @@
                         @endif
                     </div>
 
-                    
+                    <!-- Theme Toggle -->
+                    <div class="pm-header-btn theme-toggle-container">
+                        <a href="#" class="theme-toggle" title="Toggle Theme">
+                            <i class="fas fa-moon"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
             <!-- /desktop menu -->

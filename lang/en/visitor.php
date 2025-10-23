@@ -28,4 +28,5 @@ return array (
   'email' => 'E-mail',
   'date' => 'Date',
   'checkout' => 'Checkout',
+  'location' => 'Location (Region - Headquarters)',
 );

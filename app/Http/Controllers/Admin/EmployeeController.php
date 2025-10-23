@@ -40,11 +40,23 @@ class EmployeeController extends Controller
         $this->middleware('auth');
         $this->data['sitetitle'] = 'Employees';
 
-        $this->middleware(['permission:employees'])->only('index');
-        $this->middleware(['permission:employees_create'])->only('create', 'store');
-        $this->middleware(['permission:employees_edit'])->only('edit', 'update');
-        $this->middleware(['permission:employees_delete'])->only('destroy');
-        $this->middleware(['permission:employees_show'])->only('show');
+        $this->middleware(['permission:employees|employees_headquarters'])->only('index');
+        $this->middleware(['permission:employees_create|employees_create_headquarters'])->only('create', 'store');
+        $this->middleware(['permission:employees_edit|employees_edit_headquarters'])->only('edit', 'update');
+        $this->middleware(['permission:employees_delete|employees_delete_headquarters'])->only('destroy');
+        $this->middleware(['permission:employees_show|employees_show_headquarters'])->only('show');
+    }
+
+    /**
+     * Get supervisor's headquarters ID
+     */
+    protected function getSupervisorHeadquartersId()
+    {
+        if (auth()->user()->hasRole('supervisor')) {
+            $supervisorEmployee = Employee::where('user_id', auth()->user()->id)->first();
+            return $supervisorEmployee ? $supervisorEmployee->headquarters_id : null;
+        }
+        return null;
     }
 
 
@@ -56,22 +68,62 @@ class EmployeeController extends Controller
     public function index()
     {
         $employees = $this->employeeService->all();
+        $this->data['employees'] = $employees;
         return view('admin.employee.index', $this->data);
     }
 
     public function create(Request $request)
     {
-
         $this->data['designations'] = Designation::where('status', Status::ACTIVE)->get();
         $this->data['departments'] = Department::where('status', Status::ACTIVE)->get();
         $this->data['regions'] = Region::all();
-        $this->data['headquarters'] = Headquarters::all();
+        
+        // Si es supervisor, solo mostrar su sede asignada y obtener datos del supervisor
+        if (auth()->user()->hasRole('supervisor')) {
+            $supervisorHeadquartersId = $this->getSupervisorHeadquartersId();
+            $this->data['headquarters'] = Headquarters::where('id', $supervisorHeadquartersId)->get();
+            
+            // Obtener datos del supervisor para pre-llenar región y sede
+            $supervisorEmployee = Employee::where('user_id', auth()->user()->id)->first();
+            $this->data['supervisor_region_id'] = $supervisorEmployee ? $supervisorEmployee->region_id : null;
+            $this->data['supervisor_headquarters_id'] = $supervisorEmployee ? $supervisorEmployee->headquarters_id : null;
+            $this->data['is_supervisor'] = true;
+        } else {
+            $this->data['headquarters'] = Headquarters::all();
+            $this->data['is_supervisor'] = false;
+            $this->data['supervisor_region_id'] = null;
+            $this->data['supervisor_headquarters_id'] = null;
+        }
+
+        // Si es admin, mostrar roles disponibles (excluyendo el rol admin)
+        if (auth()->user()->hasRole('Admin')) {
+            $this->data['roles'] = \Spatie\Permission\Models\Role::where('name', '!=', 'Admin')->get();
+            $this->data['is_admin'] = true;
+        } else {
+            $this->data['roles'] = collect();
+            $this->data['is_admin'] = false;
+        }
 
         return view('admin.employee.create', $this->data);
     }
 
     public function store(EmployeeRequest $request)
     {
+        // Validar que el supervisor solo pueda crear empleados en su sede
+        if (auth()->user()->hasRole('supervisor')) {
+            $supervisorHeadquartersId = $this->getSupervisorHeadquartersId();
+            if ($request->headquarters_id != $supervisorHeadquartersId) {
+                return redirect()->back()->withErrors(['headquarters_id' => 'No tiene permiso para crear empleados en esta sede.'])->withInput();
+            }
+        }
+
+        // Validar que solo el admin pueda asignar roles
+        if (auth()->user()->hasRole('Admin')) {
+            $request->validate([
+                'role_id' => 'required|exists:roles,id|not_in:' . \Spatie\Permission\Models\Role::where('name', 'Admin')->first()->id
+            ]);
+        }
+        
         $this->employeeService->make($request);
         return redirect()->route('admin.employees.index')->withSuccess('The data inserted successfully!');
     }
@@ -86,20 +138,72 @@ class EmployeeController extends Controller
     public function show($id)
     {
         $this->data['employee'] = $this->employeeService->find($id);
+        
+        // Verificar que el supervisor solo pueda ver empleados de su sede
+        if (auth()->user()->hasRole('supervisor')) {
+            $supervisorHeadquartersId = $this->getSupervisorHeadquartersId();
+            if ($this->data['employee']->headquarters_id != $supervisorHeadquartersId) {
+                return redirect()->route('admin.employees.index')->withError('No tiene permiso para ver este empleado.');
+            }
+        }
+        
         return view('admin.employee.show', $this->data);
     }
 
     public function edit($id)
     {
         $this->data['employee'] = $this->employeeService->find($id);
+        
+        // Verificar que el supervisor solo pueda editar empleados de su sede
+        if (auth()->user()->hasRole('supervisor')) {
+            $supervisorHeadquartersId = $this->getSupervisorHeadquartersId();
+            if ($this->data['employee']->headquarters_id != $supervisorHeadquartersId) {
+                return redirect()->route('admin.employees.index')->withError('No tiene permiso para editar este empleado.');
+            }
+        }
+        
         $this->data['designations'] = Designation::where('status', Status::ACTIVE)->get();
         $this->data['departments'] = Department::where('status', Status::ACTIVE)->get();
         $this->data['regions'] = Region::all();
-        $this->data['headquarters'] = Headquarters::all();
+        
+        // Si es supervisor, solo mostrar su sede asignada
+        if (auth()->user()->hasRole('supervisor')) {
+            $supervisorHeadquartersId = $this->getSupervisorHeadquartersId();
+            $this->data['headquarters'] = Headquarters::where('id', $supervisorHeadquartersId)->get();
+        } else {
+            $this->data['headquarters'] = Headquarters::all();
+        }
+
+        // Si es admin, mostrar roles disponibles (excluyendo el rol admin)
+        if (auth()->user()->hasRole('Admin')) {
+            $this->data['roles'] = \Spatie\Permission\Models\Role::where('name', '!=', 'Admin')->get();
+            $this->data['is_admin'] = true;
+            // Obtener el rol actual del empleado
+            $employeeRole = $this->data['employee']->user->roles->first();
+            $this->data['employee_role_id'] = $employeeRole ? $employeeRole->id : null;
+        } else {
+            $this->data['roles'] = collect();
+            $this->data['is_admin'] = false;
+        }
+        
         return view('admin.employee.edit', $this->data);
     }
     public function update(EmployeeUpdateRequest $request, Employee $employee)
     {
+        // Validar que el supervisor solo pueda actualizar empleados en su sede
+        if (auth()->user()->hasRole('supervisor')) {
+            if ($request->headquarters_id != auth()->user()->headquarters_id) {
+                return redirect()->back()->withErrors(['headquarters_id' => 'No tiene permiso para actualizar empleados en esta sede.'])->withInput();
+            }
+        }
+
+        // Validar que solo el admin pueda actualizar roles
+        if (auth()->user()->hasRole('Admin')) {
+            $request->validate([
+                'role_id' => 'required|exists:roles,id|not_in:' . \Spatie\Permission\Models\Role::where('name', 'Admin')->first()->id
+            ]);
+        }
+        
         $this->employeeService->update($employee->id, $request);
         return redirect()->route('admin.employees.index')->withSuccess('The data updated successfully!');
     }
@@ -113,6 +217,14 @@ class EmployeeController extends Controller
 
     public function destroy($id)
     {
+        // Verificar que el supervisor solo pueda eliminar empleados de su sede
+        if (auth()->user()->hasRole('supervisor')) {
+            $employee = Employee::find($id);
+            if (!$employee || $employee->headquarters_id != $this->getSupervisorHeadquartersId()) {
+                return redirect()->route('admin.employees.index')->withError('No tiene permiso para eliminar este empleado.');
+            }
+        }
+        
         $this->employeeService->delete($id);
         return redirect()->route('admin.employees.index')->with(['success' => 'Employee delete successfully.']);
     }
@@ -120,6 +232,7 @@ class EmployeeController extends Controller
 
     public function getEmployees(Request $request)
     {
+        // El servicio ya maneja el filtrado por sede para supervisores
         $employees = $this->employeeService->all();
 
         $i            = 1;
@@ -135,14 +248,17 @@ class EmployeeController extends Controller
             ->addColumn('action', function ($employee) {
                 $retAction = '';
 
-                if (auth()->user()->can('employees_show')) {
+                if (auth()->user()->can('employees_show') || auth()->user()->can('employees_show_headquarters')) {
                     $retAction .= '<a href="' . route('admin.employees.show', $employee) . '" class="btn btn-sm btn-icon mr-2  float-left btn-info" data-toggle="tooltip" data-placement="top" title="View"><i class="far fa-eye"></i></a>';
                 }
 
-                if (auth()->user()->can('employees_edit')) {
+                if (auth()->user()->can('employees_edit') || auth()->user()->can('employees_edit_headquarters')) {
                     $retAction .= '<a href="' . route('admin.employees.edit', $employee) . '" class="btn btn-sm btn-icon float-left btn-primary" data-toggle="tooltip" data-placement="top" title="Edit"> <i class="far fa-edit"></i></a>';
                 }
 
+                if (auth()->user()->can('employees_delete') || auth()->user()->can('employees_delete_headquarters')) {
+                    $retAction .= '<form class="float-left pl-2" action="' . route('admin.employees.destroy', $employee) . '" method="POST">' . method_field('DELETE') . csrf_field() . '<button class="btn btn-sm btn-icon btn-danger" data-toggle="tooltip" data-placement="top" title="Delete"> <i class="fa fa-trash"></i></button></form>';
+                }
 
                 return $retAction;
             })
@@ -180,6 +296,14 @@ class EmployeeController extends Controller
 
     public function getVisitor($id)
     {
+        // Verificar que el empleado pertenezca a la sede del supervisor
+        if (auth()->user()->hasRole('supervisor')) {
+            $employee = Employee::find($id);
+            if (!$employee || $employee->headquarters_id != $this->getSupervisorHeadquartersId()) {
+                return Datatables::of(collect())->make(true);
+            }
+        }
+        
         $visitors = VisitingDetails::where(['employee_id' => $id])->orderBy('id', 'desc')->get();
 
         $i            = 1;

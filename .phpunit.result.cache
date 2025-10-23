@@ -1,1 +1,0 @@
-{"version":1,"defects":[],"times":{"Tests\\Feature\\HeadquartersTest::test_headquarters_index_route_exists":10.657,"Tests\\Feature\\HeadquartersTest::test_headquarters_create_route_exists":0.923,"Tests\\Feature\\HeadquartersTest::test_headquarters_store_requires_authentication":1.021,"Tests\\Feature\\HeadquartersTest::test_headquarters_model_can_be_created":0.217}}

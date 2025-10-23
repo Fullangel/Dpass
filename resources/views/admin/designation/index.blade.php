@@ -12,15 +12,15 @@
             <div class="row">
                 <div class="col-12">
                     <div class="card">
-                        @can('designations_create')
+                        @canany(['designations_create', 'designations_create_headquarters'])
                             <div class="card-header">
                                 <a href="{{ route('admin.designations.create') }}" class="btn btn-icon icon-left btn-primary"><i class="fas fa-plus"></i> {{ __('designation.add_designations') }}</a>
                             </div>
-                        @endcan
+                        @endcanany
                         <div class="card-body">
 
                             <div class="table-responsive">
-                                <table class="table table-striped" id="maintable" data-url="{{ route('admin.designations.get-designations') }}" data-status="{{ \App\Enums\Status::ACTIVE }}" data-hidecolumn="{{ auth()->user()->can('designations_edit') || auth()->user()->can('designations_delete') }}">
+                                <table class="table table-striped" id="maintable" data-url="{{ route('admin.designations.get-designations') }}" data-status="{{ \App\Enums\Status::ACTIVE }}" data-hidecolumn="{{ auth()->user()->can('designations_edit') || auth()->user()->can('designations_edit_headquarters') || auth()->user()->can('designations_delete') || auth()->user()->can('designations_delete_headquarters') }}">
                                     <thead>
                                         <tr>
                                             <th>{{ __('levels.id') }}</th>

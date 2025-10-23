@@ -91,6 +91,13 @@
         @endif
         @endif
 
+        <!-- Theme Toggle -->
+        <li class="nav-item">
+            <a href="#" class="nav-link nav-link-lg theme-toggle" data-toggle="tooltip" title="Toggle Theme">
+                <i class="fas fa-moon"></i>
+            </a>
+        </li>
+
         <li class="dropdown">
             <a href="{{ route('admin.profile') }}" data-toggle="dropdown" class="nav-link dropdown-toggle nav-link-lg nav-link-user">
                 <img alt="image" src="{{ auth()->user()->images }}" class="rounded-circle mr-1">

@@ -15,9 +15,14 @@
     @yield('css')
     <link rel="stylesheet" href="{{ asset('assets/css/dropzone.css') }}">
 
+    <!-- Theme CSS -->
+    <link rel="stylesheet" href="{{ asset('assets/css/theme-variables.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/theme-overrides.css') }}">
+
     <!-- Template CSS -->
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/components.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/datatables-dark-theme.css') }}">
     <link rel="stylesheet" href="{{ asset('css/custom.css') }}">
 
 

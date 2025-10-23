@@ -21,9 +21,22 @@ class EmployeeService
      * @param int $limit
      * @return mixed
      */
-    public function all()
+    public function all($headquartersId = null)
     {
-        return Employee::orderBy('id', 'desc')->get();
+        $query = Employee::orderBy('id', 'desc');
+        
+        // Si es supervisor, filtrar por su sede
+        if (auth()->user()->hasRole('supervisor')) {
+            $supervisorEmployee = Employee::where('user_id', auth()->user()->id)->first();
+            if ($supervisorEmployee) {
+                $query->where('headquarters_id', $supervisorEmployee->headquarters_id);
+            }
+        } elseif ($headquartersId) {
+            // Si se proporciona headquartersId y no es supervisor
+            $query->where('headquarters_id', $headquartersId);
+        }
+        
+        return $query->get();
     }
 
     /**
@@ -32,7 +45,21 @@ class EmployeeService
      */
     public function find($id)
     {
-        return Employee::findorFail($id);
+        $employee = Employee::find($id);
+        
+        if (!$employee) {
+            return null;
+        }
+        
+        // Verificar que el supervisor solo pueda ver empleados de su sede
+        if (auth()->user()->hasRole('supervisor')) {
+            $supervisorEmployee = Employee::where('user_id', auth()->user()->id)->first();
+            if ($supervisorEmployee && $employee->headquarters_id != $supervisorEmployee->headquarters_id) {
+                return null;
+            }
+        }
+        
+        return $employee;
     }
 
     /**
@@ -82,7 +109,13 @@ class EmployeeService
         $input['status']      = $request->input('status');
         $input['password']   = Hash::make($request->input('password'));
                $user         = User::create($input);
-               $role         = Role::find(2);
+               
+        // Asignar rol seleccionado si viene en la petición, sino rol por defecto (Employee)
+        if ($request->has('role_id')) {
+            $role = Role::find($request->input('role_id'));
+        } else {
+            $role = Role::find(2); // Rol Employee por defecto
+        }
         $user->assignRole($role->name);
 
         if ($request->file('image')) {
@@ -140,6 +173,16 @@ class EmployeeService
         $input['status']      = $request->input('status');
         $user = User::find($employee->user_id);
         $user->update($input);
+        
+        // Actualizar rol si viene en la petición y es diferente al actual
+        if ($request->has('role_id')) {
+            $newRole = Role::find($request->input('role_id'));
+            if ($newRole && $user->hasRole($newRole->name) === false) {
+                // Remover todos los roles actuales y asignar el nuevo
+                $user->syncRoles([$newRole->name]);
+            }
+        }
+        
         if ($request->file('image')) {
             $user->media()->delete();
             $user->addMedia($request->file('image'))->toMediaCollection('user');

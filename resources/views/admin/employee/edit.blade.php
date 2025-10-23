@@ -156,6 +156,60 @@
                                     </div>
                                     @enderror
                                 </div>
+                                @if($is_admin)
+                                <div class="form-group col">
+                                    <label>{{ __('employee.role') }}</label> <span class="text-danger">*</span>
+                                    <select name="role_id" class="form-control @error('role_id') is-invalid @enderror">
+                                        <option value="">{{ __('employee.select_role') }}</option>
+                                        @foreach($roles as $role)
+                                        <option value="{{ $role->id }}"
+                                            {{ (old('role_id', $employee_role_id) == $role->id) ? 'selected' : '' }}>
+                                            {{ $role->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('role_id')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                    @enderror
+                                </div>
+                                @endif
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col">
+                                    <label for="region_id">{{ __('region.region') }} <span class="text-danger">*</span></label>
+                                    <select id="region_id" name="region_id"
+                                        class="form-control @error('region_id') is-invalid @enderror" required>
+                                        <option value="">{{ __('region.select_region') }}</option>
+                                        @foreach($regions as $region)
+                                        <option value="{{ $region->id }}"
+                                            {{ (old('region_id', $employee->region_id) == $region->id) ? 'selected' : '' }}>
+                                            {{ $region->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('region_id')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                    @enderror
+                                </div>
+                                <div class="form-group col">
+                                    <label for="headquarters_id">{{ __('headquarters.headquarters') }} <span class="text-danger">*</span></label>
+                                    <select id="headquarters_id" name="headquarters_id"
+                                        class="form-control @error('headquarters_id') is-invalid @enderror" required>
+                                        <option value="">{{ __('headquarters.select_headquarters') }}</option>
+                                        @foreach($headquarters as $headquarter)
+                                        <option value="{{ $headquarter->id }}" data-region="{{ $headquarter->region_id }}"
+                                            {{ (old('headquarters_id', $employee->headquarters_id) == $headquarter->id) ? 'selected' : '' }}>
+                                            {{ $headquarter->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('headquarters_id')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                    @enderror
+                                </div>
                             </div>
 
                             <div class="form-row">

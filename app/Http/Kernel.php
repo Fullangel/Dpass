@@ -29,6 +29,7 @@ class Kernel extends HttpKernel
      */
     protected $middlewareGroups = [
         'web' => [
+            // \App\Http\Middleware\ForceSSL::class, // Forzar HTTPS - Desactivado temporalmente
             \App\Http\Middleware\EncryptCookies::class,
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,
@@ -70,6 +71,7 @@ class Kernel extends HttpKernel
         'role_or_permission' => \Spatie\Permission\Middlewares\RoleOrPermissionMiddleware::class,
         'backend_permission' => \App\Http\Middleware\IsHasBackendPermission::class,
         'frontend' => \App\Http\Middleware\FrontEnd::class,
+        'supervisor.scope' => \App\Http\Middleware\SupervisorHeadquartersScope::class,
 
     ];
 }

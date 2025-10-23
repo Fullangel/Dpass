@@ -415,7 +415,7 @@ p:last-child {
 /* ================== SECTIONS =================== */
 /* ================== header main ==================  */
 .header-top-light .nav-link {
-  color: #969696;
+  /* color: #969696; */
 }
 .header-top-light .nav-link:hover {
   color: #212529;
