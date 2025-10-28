@@ -872,6 +872,93 @@ SELECT 'users', COUNT(*) FROM users
 UNION ALL
 SELECT 'roles', COUNT(*) FROM roles;"
 ```
+```bash
+# Verificar si hay algún problema con el guard_name en  el modelo de usuario:
+mysql -u[usuarioDB] -p[passwordDB] [DB] -e "SELECT * FROM permissions WHERE name = 'regions';" 
+
+# Respuesta esperada:
++----+---------+------------+------------+------------+
+| id | name    | guard_name | created_at | updated_at |
++----+---------+------------+------------+------------+
+| 51 | regions | web        | NULL       | NULL       |
++----+---------+------------+------------+------------+
+
+# Verificar si el usuario tiene el rol correcto y si está usando el guard_name correcto:
+mysql -u[usuarioDB] -p[passwordDB] [DB] -e "SELECT u.id, u.email, r.name as role_name, r.guard_name as role_guard, p.name as permission_name, p.guard_name as perm_guard FROM users u JOIN model_has_roles mhr ON u.id = mhr.model_id JOIN roles r ON mhr.role_id = r.id JOIN role_has_permissions rhp ON r.id = rhp.role_id JOIN permissions p ON rhp.permission_id = p.id WHERE u.email = 'admin@example.com' AND p.name = 'regions';"
+
+# Respuesta esperada: 
++----+-------------------+-----------+------------+-----------------+------------+
+| id | email             | role_name | role_guard | permission_name | perm_guard |
++----+-------------------+-----------+------------+-----------------+------------+
+|  1 | admin@example.com | Admin     | web        | regions         | web        |
++----+-------------------+-----------+------------+-----------------+------------+
+```
+
+**En caso de no obtener los resultados anteriores seguir estos pasos:**
+
+```bash
+# Crear los permisos de regions
+mysql -uvisitante -pvisitante1 visitantes -e "INSERT INTO permissions (name, guard_name, created_at, updated_at) VALUES ('regions', 'web', NOW(), NOW());"
+
+# Crear los permisos específicos de regions
+mysql -uvisitante -pvisitante1 visitantes -e "INSERT INTO permissions (name, guard_name, created_at, updated_at) VALUES 
+('regions_create', 'web', NOW(), NOW()),
+('regions_edit', 'web', NOW(), NOW()),
+('regions_delete', 'web', NOW(), NOW()),
+('regions_show', 'web', NOW(), NOW());"
+
+# Asignar los permisos al rol Admin
+mysql -uvisitante -pvisitante1 visitantes -e "INSERT INTO role_has_permissions (permission_id, role_id) 
+SELECT p.id, r.id FROM permissions p, roles r WHERE p.name LIKE 'regions%' AND r.name = 'Admin';"
+
+----------------------------------------------------------
+# En caso de querer hacerlo por SQL estos son los comandos:
+
+START TRANSACTION;
+
+# -- 1) Crear permiso 'regions' si no existe (forma robusta)
+INSERT INTO permissions (name, guard_name, created_at, updated_at)
+SELECT 'regions', 'web', NOW(), NOW()
+FROM (SELECT 1) AS tmp
+LEFT JOIN permissions p ON p.name = 'regions' AND p.guard_name = 'web'
+WHERE p.id IS NULL;
+
+# -- 2) Crear permisos específicos de regions (evita duplicados)
+INSERT INTO permissions (name, guard_name, created_at, updated_at)
+SELECT t.name, t.guard_name, NOW(), NOW()
+FROM (
+  SELECT 'regions_create' AS name, 'web' AS guard_name
+  UNION ALL SELECT 'regions_edit', 'web'
+  UNION ALL SELECT 'regions_delete', 'web'
+  UNION ALL SELECT 'regions_show', 'web'
+) AS t
+LEFT JOIN permissions p ON p.name = t.name AND p.guard_name = t.guard_name
+WHERE p.id IS NULL;
+
+# -- 3) Asegúrate de que exista el rol 'Admin' (si no, lo crea)
+INSERT INTO roles (name, guard_name, created_at, updated_at)
+SELECT 'Admin', 'web', NOW(), NOW()
+FROM (SELECT 1) AS tmp2
+LEFT JOIN roles r ON r.name = 'Admin' AND r.guard_name = 'web'
+WHERE r.id IS NULL;
+
+# -- 4) Asignar los permisos que empiezan por 'regions' al rol 'Admin' (sin duplicados)
+INSERT INTO role_has_permissions (permission_id, role_id)
+SELECT p.id, r.id
+FROM permissions p
+JOIN roles r ON r.name = 'Admin' AND r.guard_name = 'web'
+LEFT JOIN role_has_permissions rhp ON rhp.permission_id = p.id AND rhp.role_id = r.id
+WHERE p.name LIKE 'regions%' AND rhp.permission_id IS NULL;
+
+COMMIT;
+
+# Para confirmar que fue efectivo correr este SQL, si se obtiene datos funciono, si no, volver a correr el SQL anterior
+
+SELECT * FROM permissions WHERE name LIKE 'regions%';
+SELECT * FROM roles WHERE name = 'Admin';
+SELECT * FROM role_has_permissions WHERE permission_id IN (SELECT id FROM permissions WHERE name LIKE 'regions%');
+```
+
 
 **Resultados esperados:**
 - Regions: 25 (24 estados + DC)
