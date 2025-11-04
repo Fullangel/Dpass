@@ -36,6 +36,7 @@ return array (
   'update_fcm_notification_setting' => 'Update Firebase Notification Setting',
   'id' => 'ID',
   'actions' => 'Actions',
+  'region' => 'Region',
   'user' => 'User',
   'title' => 'Title',
   'url' => 'URL',
@@ -50,4 +51,5 @@ return array (
   'twilio' => 'Twilio Setting',
   'server_url' => 'Server Url',
   'server_key' => 'API Key',
+  'select_region' => 'Select Region',
 );

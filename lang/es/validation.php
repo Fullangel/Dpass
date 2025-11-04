@@ -218,5 +218,6 @@ return array (
   'addons' => 'Complementos',
   'whatsapp_settings' => 'Configuración de WhatsApp',
   'regions' => 'Regiones',
+  'headquarters' => 'Sedes',
   ),
 );

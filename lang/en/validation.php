@@ -199,6 +199,7 @@ return array (
     'request-withdraw' => 'Request Withdraw',
     'pages' => 'Pages',
     'regions' => 'Regions',
+    'headquarters' => 'Headquarters',
     'footer_menu_section_id' => 'Footer Menu Section',
     'url' => 'URL',
     'collections' => 'Collections',
