@@ -77,6 +77,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'installed', 'backen
     Route::resource('headquarters', \App\Http\Controllers\Admin\HeadquartersController::class);
     Route::get('get-headquarters', [\App\Http\Controllers\Admin\HeadquartersController::class, 'getHeadquarters'])->name('headquarters.get-headquarters');
     Route::get('get-headquarters-by-region', [\App\Http\Controllers\Admin\HeadquartersController::class, 'getHeadquartersByRegion'])->name('headquarters.get-by-region');
+    Route::get('get-dependencies-by-region', [\App\Http\Controllers\Admin\HeadquartersController::class, 'getDependenciesByRegion'])->name('headquarters.get-dependencies-by-region');
 
     //web-token
     Route::post('store-token', [WebNotificationController::class, 'store'])->name('store.token');
@@ -163,7 +164,7 @@ Route::group(['middleware' => ['installed']], function () {
 
         Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
 
-        Route::post('/checkout', [CheckoutController::class, 'getVisitor'])->name('checkout.index');
+        Route::post('/checkout', [CheckoutController::class, 'getVisitor'])->name('checkout.post');
 
         Route::get('/checkout/update/{visitingDetails}', [CheckoutController::class, 'update'])->name('checkout.update');
 

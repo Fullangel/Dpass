@@ -28,7 +28,8 @@ class Headquarters extends Model
         'description',
         'address',
         'phone',
-        'region_id'
+        'region_id',
+        'dependency_id'
     ];
 
     /**
@@ -47,6 +48,14 @@ class Headquarters extends Model
     public function region(): BelongsTo
     {
         return $this->belongsTo(Region::class);
+    }
+
+    /**
+     * Get the dependency that owns the headquarters.
+     */
+    public function dependency(): BelongsTo
+    {
+        return $this->belongsTo(Dependency::class);
     }
 
     /**

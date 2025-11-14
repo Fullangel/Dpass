@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Headquarters;
 use App\Models\Region;
+use App\Models\Dependency;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\Log;
@@ -45,11 +46,14 @@ class HeadquartersController extends Controller
 
     public function getHeadquarters(Request $request)
     {
-        $headquarters = Headquarters::with('region')->select('headquarters.*');
+        $headquarters = Headquarters::with(['region', 'dependency'])->select('headquarters.*');
         
         return DataTables::of($headquarters)
             ->addColumn('region_name', function ($headquarter) {
                 return $headquarter->region ? $headquarter->region->name : '-';
+            })
+            ->addColumn('dependency_name', function ($headquarter) {
+                return $headquarter->dependency ? $headquarter->dependency->name : '-';
             })
             ->addColumn('action', function ($headquarter) {
                 $return = '<div class="d-flex justify-content-center">';
@@ -80,7 +84,9 @@ class HeadquartersController extends Controller
     public function create()
     {
         $regions = Region::all();
-        return view('admin.headquarters.create', compact('regions'));
+        // No cargar todas las dependencias, se cargarán dinámicamente por AJAX
+        $dependencies = collect(); // Collection vacía
+        return view('admin.headquarters.create', compact('regions', 'dependencies'));
     }
 
     public function store(Request $request)
@@ -90,7 +96,8 @@ class HeadquartersController extends Controller
             'description' => 'nullable|string',
             'address' => 'nullable|string',
             'phone' => 'nullable|string|max:20',
-            'region_id' => 'required|exists:regions,id'
+            'region_id' => 'required|exists:regions,id',
+            'dependency_id' => 'nullable|exists:dependencies,id'
         ]);
 
         Headquarters::create([
@@ -98,7 +105,8 @@ class HeadquartersController extends Controller
             'description' => $request->description,
             'address' => $request->address,
             'phone' => $request->phone,
-            'region_id' => $request->region_id
+            'region_id' => $request->region_id,
+            'dependency_id' => $request->dependency_id
         ]);
 
         return redirect()->route('admin.headquarters.index')->with('success', 'Sede creada exitosamente.');
@@ -108,7 +116,8 @@ class HeadquartersController extends Controller
     {
         $headquarter = Headquarters::findOrFail($id);
         $regions = Region::all();
-        return view('admin.headquarters.edit', compact('headquarter', 'regions'));
+        $dependencies = Dependency::all();
+        return view('admin.headquarters.edit', compact('headquarter', 'regions', 'dependencies'));
     }
 
     public function update(Request $request, $id)
@@ -118,7 +127,8 @@ class HeadquartersController extends Controller
             'description' => 'nullable|string',
             'address' => 'nullable|string',
             'phone' => 'nullable|string|max:20',
-            'region_id' => 'required|exists:regions,id'
+            'region_id' => 'required|exists:regions,id',
+            'dependency_id' => 'nullable|exists:dependencies,id'
         ]);
 
         $headquarter = Headquarters::findOrFail($id);
@@ -127,7 +137,8 @@ class HeadquartersController extends Controller
             'description' => $request->description,
             'address' => $request->address,
             'phone' => $request->phone,
-            'region_id' => $request->region_id
+            'region_id' => $request->region_id,
+            'dependency_id' => $request->dependency_id
         ]);
 
         return redirect()->route('admin.headquarters.index')->with('success', 'Sede actualizada exitosamente.');
@@ -175,5 +186,21 @@ class HeadquartersController extends Controller
             ->get();
         
         return response()->json($headquarters);
+    }
+
+    public function getDependenciesByRegion(Request $request)
+    {
+        $region_id = $request->input('region_id');
+        
+        if (!$region_id) {
+            return response()->json([]);
+        }
+        
+        $dependencies = Dependency::where('region_id', $region_id)
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
+        
+        return response()->json($dependencies);
     }
 }

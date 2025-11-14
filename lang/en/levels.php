@@ -52,4 +52,10 @@ return array (
   'server_url' => 'Server Url',
   'server_key' => 'API Key',
   'select_region' => 'Select Region',
+  'dependency' => 'Dependency',
+  'select_dependency' => 'Select Dependency',
+  'select_region_first' => 'Please select a region first',
+  'loading_dependencies' => 'Loading dependencies...',
+  'no_dependencies_for_region' => 'No dependencies for this region',
+  'error_loading_dependencies' => 'Error loading dependencies',
 );

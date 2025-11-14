@@ -6,6 +6,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Region;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class RegionSeeder extends Seeder
 {
@@ -17,13 +18,13 @@ class RegionSeeder extends Seeder
     public function run()
     {
         // Desactivar verificación de claves foráneas temporalmente
-        DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        Schema::disableForeignKeyConstraints();
         
         // Vaciar la tabla de regiones
         DB::table('regions')->truncate();
         
         // Reactivar verificación de claves foráneas
-        DB::statement('SET FOREIGN_KEY_CHECKS=1');
+        Schema::enableForeignKeyConstraints();
         
         // Crear las regiones especificadas
         $regions = [
@@ -36,9 +37,14 @@ class RegionSeeder extends Seeder
             ['name' => 'Region Nororiental'],
             ['name' => 'Region Los Andes'],
             ['name' => 'Region Especiales Plaza'],
-            ['name' => 'Region Guyana'],
+            ['name' => 'Region Guayana'],
             ['name' => 'Region Los Llanos'],
             ['name' => 'Nivel Normativo'],
+            ['name' => 'Region Centro Occidental'],
+            ['name' => 'Region De Contribuyentes Especiales'],
+            ['name' => 'Region De La Unidad De Cobros y Recuperaciones De Aduanas'],
+            ['name' => 'Region Falcon'],
+            ['name' => 'Informacion No Disponible'],
         ];
         
         foreach ($regions as $region) {

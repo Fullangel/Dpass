@@ -26,6 +26,7 @@
                                             <th>{{ __('levels.id') }}</th>
                                             <th>{{ __('levels.name') }}</th>
                                             <th>{{ __('levels.region') }}</th>
+                                            <th>{{ __('levels.dependency') }}</th>
                                             <th>{{ __('levels.description') }}</th>
                                             <th>{{ __('levels.actions') }}</th>
                                         </tr>

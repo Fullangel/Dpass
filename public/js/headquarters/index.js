@@ -11,12 +11,13 @@ $(function() {
             { data: 'id', name: 'id' },
             { data: 'name', name: 'name' },
             { data: 'region_name', name: 'region.name' },
+            { data: 'dependency_name', name: 'dependency.name' },
             { data: 'description', name: 'description' },
             { data: 'action', name: 'action', orderable: false, searchable: false }
         ],
         columnDefs: [
             {
-                targets: [4], // Índice de la columna de acciones
+                targets: [5], // Índice de la columna de acciones
                 visible: hidecolumn,
                 searchable: false
             }

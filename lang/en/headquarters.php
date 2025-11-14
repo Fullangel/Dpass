@@ -6,6 +6,7 @@ return array (
   'edit_headquarters' => 'Edit Headquarters',
   'name' => 'Headquarters Name',
   'region' => 'Region',
+  'dependency' => 'Dependency',
   'description' => 'Description',
   'address' => 'Address',
   'phone' => 'Phone',

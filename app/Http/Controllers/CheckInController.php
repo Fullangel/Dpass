@@ -210,10 +210,10 @@ class CheckInController extends Controller
                 $image = str_replace('data:image/png;base64,', '', $encoded_data);
                 $image = str_replace(' ', '+', $image);
                 $imageName = Str::random(10) . '.' . 'png';
-                file_put_contents($imageName, base64_decode($image));
-                $url = public_path($imageName);
+                $tempPath = storage_path('app/temp/' . $imageName);
+                file_put_contents($tempPath, base64_decode($image));
                 $optimizerChain = OptimizerChainFactory::create();
-                $optimizerChain->optimize($url);
+                $optimizerChain->optimize($tempPath);
             }
         } else {
             redirect()->route('check-in.step-one')->with('error', 'visitor information not found, fill again!');
@@ -304,8 +304,8 @@ class CheckInController extends Controller
             $visiting['editor_id']    = $userId;
             $visitingDetails          = VisitingDetails::create($visiting);
             if ($imageName) {
-                $visitingDetails->addMedia($imageName)->toMediaCollection('visitor');
-                File::delete($imageName);
+                $visitingDetails->addMedia($tempPath)->toMediaCollection('visitor');
+                File::delete($tempPath);
             }
 
             try {

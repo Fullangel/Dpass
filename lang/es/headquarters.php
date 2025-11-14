@@ -6,6 +6,7 @@ return array (
   'edit_headquarters' => 'Editar Sede',
   'name' => 'Nombre de la Sede',
   'region' => 'Región',
+  'dependency' => 'Dependencia',
   'description' => 'Descripción',
   'address' => 'Dirección',
   'phone' => 'Teléfono',

@@ -88,12 +88,18 @@ class VisitorController extends BackendController
     public function store(VisitorRequest $request)
     {
         $visitingDetail = $this->visitorService->make($request);
-        $imageUrl = 'app/public'.str_replace('/storage/',"",$visitingDetail->images);
-        try{
-            $optimizerChain = OptimizerChainFactory::create();
-            $optimizerChain->optimize(storage_path($imageUrl));
-        }catch(\Exception $e){
-
+        
+        // Optimizar imagen si existe
+        if ($visitingDetail->getFirstMediaUrl('visitor')) {
+            try {
+                $media = $visitingDetail->getFirstMedia('visitor');
+                if ($media && file_exists($media->getPath())) {
+                    $optimizerChain = OptimizerChainFactory::create();
+                    $optimizerChain->optimize($media->getPath());
+                }
+            } catch (\Exception $e) {
+                // Silenciar errores de optimización
+            }
         }
 
         if (setting('whatsapp_message')) {
@@ -185,12 +191,17 @@ class VisitorController extends BackendController
         }
         
         $visitingDetail = $this->visitorService->update($request, $visitor->id);
-        $imageUrl = 'app/public'.str_replace('/storage/',"",$visitingDetail->images);
-        try{
-            $optimizerChain = OptimizerChainFactory::create();
-            $optimizerChain->optimize(storage_path($imageUrl));
-        }catch(\Exception $e){
-
+        // Optimizar imagen si existe
+        if ($visitingDetail->getFirstMediaUrl('visitor')) {
+            try {
+                $media = $visitingDetail->getFirstMedia('visitor');
+                if ($media && file_exists($media->getPath())) {
+                    $optimizerChain = OptimizerChainFactory::create();
+                    $optimizerChain->optimize($media->getPath());
+                }
+            } catch (\Exception $e) {
+                // Silenciar errores de optimización
+            }
         }
         return redirect()->route('admin.visitors.index')->withSuccess('The data updated successfully!');
     }

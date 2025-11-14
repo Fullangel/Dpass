@@ -32,5 +32,7 @@ class DatabaseSeeder extends Seeder
         $this->call(DesignationTableSeeder::class);
         $this->call(LanguageSeeder::class);
         $this->call(SupervisorRoleSeeder::class);
+        $this->call(RegionSeeder::class);
+        $this->call(DependencySeeder::class);
     }
 }

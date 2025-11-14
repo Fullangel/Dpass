@@ -8,11 +8,25 @@ return new class extends Migration
 {
     private function foreignKeyExists(string $table, string $constraint): bool
     {
-        $dbName = config('database.connections.' . config('database.default') . '.database');
-        $result = \Illuminate\Support\Facades\DB::select(
-            'SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = ? AND TABLE_NAME = ? AND CONSTRAINT_NAME = ? AND CONSTRAINT_TYPE = "FOREIGN KEY"',
-            [$dbName, $table, $constraint]
-        );
+        $connection = config('database.default');
+        $dbName = config('database.connections.' . $connection . '.database');
+        
+        // Consulta compatible con ambos motores de base de datos
+        if (config('database.connections.' . $connection . '.driver') === 'pgsql') {
+            $result = \Illuminate\Support\Facades\DB::select(
+                'SELECT constraint_name FROM information_schema.table_constraints 
+                 WHERE table_catalog = ? AND table_name = ? AND constraint_name = ? AND constraint_type = ?',
+                [$dbName, $table, $constraint, 'FOREIGN KEY']
+            );
+        } else {
+            // MySQL
+            $result = \Illuminate\Support\Facades\DB::select(
+                'SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS 
+                 WHERE CONSTRAINT_SCHEMA = ? AND TABLE_NAME = ? AND CONSTRAINT_NAME = ? AND CONSTRAINT_TYPE = "FOREIGN KEY"',
+                [$dbName, $table, $constraint]
+            );
+        }
+        
         return !empty($result);
     }
     public function up()
@@ -73,11 +87,15 @@ return new class extends Migration
         if (Schema::hasTable('pre_registers')) {
             // Ensure visitor_id is BIGINT UNSIGNED to match visitors.id
             if (Schema::hasColumn('pre_registers', 'visitor_id')) {
-                // Use raw SQL to avoid requiring doctrine/dbal
-                \Illuminate\Support\Facades\DB::statement('ALTER TABLE `pre_registers` MODIFY `visitor_id` BIGINT UNSIGNED');
+                // Usar Schema en lugar de SQL crudo para compatibilidad cross-DB
+                Schema::table('pre_registers', function (Blueprint $table) {
+                    $table->unsignedBigInteger('visitor_id')->change();
+                });
             }
             if (Schema::hasColumn('pre_registers', 'employee_id')) {
-                \Illuminate\Support\Facades\DB::statement('ALTER TABLE `pre_registers` MODIFY `employee_id` BIGINT UNSIGNED');
+                Schema::table('pre_registers', function (Blueprint $table) {
+                    $table->unsignedBigInteger('employee_id')->change();
+                });
             }
             Schema::table('pre_registers', function (Blueprint $table) {
                 if (!$this->foreignKeyExists('pre_registers', 'pre_registers_employee_id_foreign')) {

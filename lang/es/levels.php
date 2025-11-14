@@ -52,4 +52,10 @@ return array (
   'server_url' => 'URL del Servidor',
   'server_key' => 'Clave del Servidor',
   'select_region' => 'Seleccionar Región',
+  'dependency' => 'Dependencia',
+  'select_dependency' => 'Seleccionar Dependencia',
+  'select_region_first' => 'Seleccione primero una región',
+  'loading_dependencies' => 'Cargando dependencias...',
+  'no_dependencies_for_region' => 'No hay dependencias para esta región',
+  'error_loading_dependencies' => 'Error al cargar dependencias',
 );

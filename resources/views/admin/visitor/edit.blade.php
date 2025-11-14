@@ -156,7 +156,7 @@
                                             </div>
                                         @endif
                                         @if($visitingDetails->getFirstMediaUrl('visitor'))
-                                            <img class="img-thumbnail image-width mt-4 mb-3" id="previewImage" src="{{ asset($visitingDetails->getFirstMediaUrl('visitor')) }}" alt="your image"/>
+                                            <img class="img-thumbnail image-width mt-4 mb-3" id="previewImage" src="{{ $visitingDetails->getFirstMediaUrl('visitor') }}" alt="your image"/>
                                         @else
                                             <img class="img-thumbnail image-width mt-4 mb-3" id="previewImage" src="{{ asset('assets/img/default/user.png') }}" alt="your image"/>
                                         @endif

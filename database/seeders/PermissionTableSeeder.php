@@ -251,6 +251,27 @@ class PermissionTableSeeder extends Seeder
         $permissionArray[$i]['name']       = 'pre-registers_headquarters';
         $permissionArray[$i]['guard_name'] = 'web';
 
+        // Permisos para Regions (Regiones)
+        $i++;
+        $permissionArray[$i]['name']       = 'regions';
+        $permissionArray[$i]['guard_name'] = 'web';
+
+        $i++;
+        $permissionArray[$i]['name']       = 'regions_create';
+        $permissionArray[$i]['guard_name'] = 'web';
+
+        $i++;
+        $permissionArray[$i]['name']       = 'regions_edit';
+        $permissionArray[$i]['guard_name'] = 'web';
+
+        $i++;
+        $permissionArray[$i]['name']       = 'regions_delete';
+        $permissionArray[$i]['guard_name'] = 'web';
+
+        $i++;
+        $permissionArray[$i]['name']       = 'regions_show';
+        $permissionArray[$i]['guard_name'] = 'web';
+
         // Insertar permisos usando firstOrCreate para evitar duplicados
         foreach ($permissionArray as $permission) {
             Permission::firstOrCreate([
