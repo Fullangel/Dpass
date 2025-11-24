@@ -10123,3 +10123,7 @@ DETAIL:  Failing row contains (2, 0, null, auth, failed, null, 2025-11-13 16:16:
 [2025-11-14 11:30:32] production.INFO: Acceso autorizado a sedes {"user_id":1,"user_email":"admin@example.com","timestamp":"2025-11-14 11:30:32"} 
 [2025-11-14 11:31:08] production.INFO: Acceso autorizado a sedes {"user_id":1,"user_email":"admin@example.com","timestamp":"2025-11-14 11:31:08"} 
 [2025-11-14 11:36:22] production.INFO: Acceso autorizado a sedes {"user_id":1,"user_email":"admin@example.com","timestamp":"2025-11-14 11:36:22"} 
+[2025-11-14 14:17:38] production.INFO: Acceso autorizado a sedes {"user_id":1,"user_email":"admin@example.com","timestamp":"2025-11-14 14:17:38"} 
+[2025-11-14 14:55:32] production.INFO: Acceso autorizado a sedes {"user_id":1,"user_email":"admin@example.com","timestamp":"2025-11-14 14:55:32"} 
+[2025-11-14 14:58:50] production.INFO: Acceso autorizado a sedes {"user_id":1,"user_email":"admin@example.com","timestamp":"2025-11-14 14:58:50"} 
+[2025-11-14 15:14:17] production.INFO: Acceso autorizado a sedes {"user_id":1,"user_email":"admin@example.com","timestamp":"2025-11-14 15:14:17"} 
