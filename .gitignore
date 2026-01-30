@@ -1,8 +1,50 @@
-node_modules
+/node_modules
+/public/hot
+/public/build
+/public/storage
+/storage/*.key
+/vendor
 
-#entorno
+# Entorno
 .env
-°
+.env.backup
+.env.production
+.env.postgresql*
+.env.*.local
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
 
-#media 
+# Logs y caché
+*.log
+error_log
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/*
+bootstrap/cache/*
 
+# IDE / editor
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Media y archivos generados
+storage/app/public/*
+!storage/app/public/.gitkeep
+storage/app/temp/*
+public/qrcode/*.png
+public/qrcode/*.svg
+
+# SSL / certificados (claves privadas; no subir al repo)
+ssl-ca/private/
+ssl-ca/temp-cert.pem
+ssl-ca/newcerts/
+ssl-ca/serial
+ssl-ca/crlnumber
+ssl-ca/index.txt
+ssl-ca/index.txt.attr
