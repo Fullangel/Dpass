@@ -15,6 +15,13 @@ $(document).ready(function () {
         autoclose: true
     })
 
+    if ($('#visit_destination_ids').length) {
+        $('#visit_destination_ids').select2({
+            placeholder: 'Seleccione destinos de visita',
+            width: '100%',
+        });
+    }
+
     // Función AJAX para cargar sedes por región
     function loadHeadquartersByRegion(regionId) {
         if (!regionId) {

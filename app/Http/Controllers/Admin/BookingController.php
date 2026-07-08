@@ -12,6 +12,7 @@ use App\Models\PreRegister;
 use App\Models\Visitor;
 use App\Notifications\SendVisitorToEmployee;
 use App\Http\Services\Booking\BookingService;
+use App\Support\PurposeNormalizer;
 use Illuminate\Http\Request;
 use DB;
 use Illuminate\Support\Facades\Notification;
@@ -189,7 +190,7 @@ class BookingController extends Controller
         if($visitor){
             $booking                          = new Booking();
             $booking->reg_no                  = $reg_no;
-            $booking->purpose                 = $request['purpose'];
+            $booking->purpose                 = PurposeNormalizer::canonicalize($request['purpose']);
             $booking->start_at                = $request['start_at'];
             $booking->end_at                  = $request['end_at'];
             $booking->user_id                 = $getEmployee->user_id;

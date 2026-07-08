@@ -40,7 +40,7 @@ class BackendMenuComposer
                 }
 
                 // Verificar permisos solo si el usuario está autenticado
-                if (($node['link'] != '#') && $user && !$user->can($node['link'])) {
+                if (($node['link'] != '#') && $user && ! $this->userCanSeeMenu($user, $node['link'])) {
                     continue;
                 }
 
@@ -56,6 +56,19 @@ class BackendMenuComposer
         }
 
         return $tree;
+    }
+
+    private function userCanSeeMenu($user, string $link): bool
+    {
+        if ($user->can($link)) {
+            return true;
+        }
+
+        if ($link === 'visit-destinations' && ($user->hasRole('Admin') || $user->hasRole('supervisor'))) {
+            return true;
+        }
+
+        return false;
     }
 
     private function frontendMenu(array $nodes, string &$menu)

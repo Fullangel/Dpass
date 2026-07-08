@@ -21,7 +21,10 @@ use Illuminate\Support\Facades\Validator;
 use App\Notifications\EmployeConfirmation;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\Http\Services\PushNotificationService;
+use App\Services\VisitDestinationService;
+use App\Support\PurposeNormalizer;
 use Spatie\ImageOptimizer\OptimizerChainFactory;
+use Spatie\MediaLibrary\MediaCollections\Exceptions\FileDoesNotExist;
 
 class CheckInController extends Controller
 {
@@ -45,7 +48,7 @@ class CheckInController extends Controller
 
     public function createStepOne(Request $request)
     {
-        $employees = Employee::where('status', Status::ACTIVE)->get();
+        $employees = $this->employeesForVisitorForm();
         $visitor = (object)$request->session()->get('visitor');
 
         $employee_id = "";
@@ -78,6 +81,13 @@ class CheckInController extends Controller
 
     public function postCreateStepOne(Request $request)
     {
+        if ($request->filled('employee_id') && !$this->employeeAllowedForCurrentUser((int) $request->input('employee_id'))) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->withErrors(['employee_id' => 'El funcionario seleccionado no pertenece a su sede.']);
+        }
+
         if ($request->session()->get('is_returned') == false || empty($request->session()->get('is_returned'))) {
             $emailValidation = '';
 
@@ -117,19 +127,30 @@ class CheckInController extends Controller
                 $validatedData = array_merge($validatedData, $termsConditionsAcceptStatusValidation);
             }
         } else {
-            $visitor = Visitor::where('email', $request->get('email') == null ? '' : $request->get('email'))
-                ->orWhere('phone', $request->get('phone') == null ? '' : $request->get('phone'))
-                ->orWhere('national_identification_no', $request->get('national_identification_no') == null ? '' : $request->get('national_identification_no'))
-                ->first();
+            // Buscar visitante existente solo por campos no vacíos
+            $visitor = Visitor::where(function($query) use ($request) {
+                if (!blank($request->get('email'))) {
+                    $query->orWhere('email', $request->get('email'));
+                }
+                if (!blank($request->get('phone'))) {
+                    $query->orWhere('phone', $request->get('phone'));
+                }
+                if (!blank($request->get('national_identification_no'))) {
+                    $query->orWhere('national_identification_no', $request->get('national_identification_no'));
+                }
+            })->first();
+            
             $national_identification_no = "";
             if ($visitor) {
+                // Visitante encontrado - excluirlo de validación de unicidad
                 $email = blank($request->get('email')) ? '' : ['email', 'string', 'unique:visitors,email,' . $visitor->id];
                 $phone = ['required', 'string', Rule::unique("visitors", "phone")->ignore($visitor)];
                 $national_identification_no = ['required',  'string', 'unique:visitors,national_identification_no,'.$visitor->id];
 
             } else {
+                // Visitante NO encontrado - validar unicidad completa
                 $email                      = blank($request->get('email')) ? '' : ['email', 'string', 'unique:visitors,email'];
-                $phone                      = [];
+                $phone                      = ['required', 'string', 'unique:visitors,phone'];
                 $national_identification_no = ['required',  'string', 'unique:visitors,national_identification_no'];
             }
 
@@ -162,6 +183,12 @@ class CheckInController extends Controller
             }
         }
         $request->session()->put('visitor', $validatedData);
+        
+        // Si es visitante recurrente, saltar step-two y crear registro directamente
+        if ($request->session()->get('is_returned') == true) {
+            return $this->store($request);
+        }
+        
         return redirect()->route('check-in.step-two');
     }
 
@@ -282,30 +309,84 @@ class CheckInController extends Controller
 
 
         if ($visitor) {
-            // Obtener la información del empleado para asignar region y sede
+            // Obtener la información del empleado para asignar región y sede
             $employee = Employee::find($getVisitor['employee_id']);
-            
+
             // Obtener el usuario autenticado para asignar creador/editor
             $currentUser = Auth::user();
             $userId = $currentUser ? $currentUser->id : 1;
-            
+
             $visiting['reg_no']       = $reg_no;
-            $visiting['purpose']      = $getVisitor['purpose'];
+            $visiting['purpose']      = PurposeNormalizer::canonicalize($getVisitor['purpose']);
             $visiting['company_name'] = $getVisitor['company_name'];
             $visiting['employee_id']  = $getVisitor['employee_id'];
             $visiting['visitor_id']   = $visitor->id;
             $visiting['region_id']    = $employee ? $employee->region_id : null;
             $visiting['headquarters_id'] = $employee ? $employee->headquarters_id : null;
             $visiting['status']       = VisitorStatus::PENDDING;
-            $visiting['user_id']      = $getVisitor['employee_id'];
+            // user_id debe apuntar a la tabla users, no al id del empleado
+            $visiting['user_id']      = $employee && $employee->user_id ? $employee->user_id : $userId;
             $visiting['creator_id']   = $userId;
             $visiting['creator_type'] = 'App\Models\User';
             $visiting['editor_type']  = 'App\Models\User';
             $visiting['editor_id']    = $userId;
+            app(VisitDestinationService::class)->applyToVisitingPayload($visiting, $employee);
             $visitingDetails          = VisitingDetails::create($visiting);
+            
             if ($imageName) {
+                // Nueva foto capturada
                 $visitingDetails->addMedia($tempPath)->toMediaCollection('visitor');
                 File::delete($tempPath);
+            } elseif ($request->session()->get('is_returned') == true) {
+                // Visitante recurrente sin nueva foto - copiar foto anterior
+                $previousVisit = VisitingDetails::where('visitor_id', $visitor->id)
+                    ->whereNotNull('id')
+                    ->where('id', '!=', $visitingDetails->id)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+                
+                if ($previousVisit && $previousVisit->getFirstMedia('visitor')) {
+                    $previousMedia = $previousVisit->getFirstMedia('visitor');
+                    
+                    try {
+                        // Obtener la ruta del archivo
+                        $mediaPath = $previousMedia->getPath();
+                        
+                        // Verificar que el archivo existe físicamente antes de intentar copiarlo
+                        if (File::exists($mediaPath)) {
+                            $visitingDetails->addMedia($mediaPath)
+                                ->preservingOriginal()
+                                ->toMediaCollection('visitor');
+                        } else {
+                            // Si el archivo no existe físicamente, registrar el problema
+                            // pero no lanzar excepción. El sistema usará la imagen por defecto
+                            // definida en VisitingDetails::getImagesAttribute()
+                            \Log::warning('Archivo de media no encontrado al copiar de visita anterior', [
+                                'visitor_id' => $visitor->id,
+                                'previous_visit_id' => $previousVisit->id,
+                                'media_id' => $previousMedia->id,
+                                'expected_path' => $mediaPath
+                            ]);
+                        }
+                    } catch (FileDoesNotExist $e) {
+                        // Capturar específicamente el error de archivo no encontrado
+                        \Log::warning('Error de Spatie MediaLibrary al copiar media: ' . $e->getMessage(), [
+                            'visitor_id' => $visitor->id,
+                            'previous_visit_id' => $previousVisit->id,
+                            'media_id' => $previousMedia->id ?? null
+                        ]);
+                        // Continuar sin copiar el media - el sistema usará la imagen por defecto
+                    } catch (\Exception $e) {
+                        // Capturar cualquier otro error al copiar el media
+                        \Log::error('Error inesperado al copiar media de visita anterior: ' . $e->getMessage(), [
+                            'visitor_id' => $visitor->id,
+                            'previous_visit_id' => $previousVisit->id,
+                            'media_id' => $previousMedia->id ?? null,
+                            'exception' => get_class($e)
+                        ]);
+                        // Continuar sin copiar el media - el sistema usará la imagen por defecto
+                    }
+                }
             }
 
             try {
@@ -315,13 +396,19 @@ class CheckInController extends Controller
             } catch (\Exception $e) {
             }
 
-            try {
-                app(PushNotificationService::class)->sendWebNotification($visitingDetails);
-            } catch (\Exception $exception) {
-            }
+            // DESHABILITADO: Notificaciones push causan timeout de 300s al no poder conectar con fcm.googleapis.com
+            // try {
+            //     app(PushNotificationService::class)->sendWebNotification($visitingDetails);
+            // } catch (\Exception $exception) {
+            // }
+
+            // try {
+            //     app(PushNotificationService::class)->sendPushNotification($visitingDetails, $visitingDetails->employee->email);
+            // } catch (\Exception $exception) {
+            // }
 
             try {
-                app(PushNotificationService::class)->sendPushNotification($visitingDetails, $visitingDetails->employee->email);
+                app(VisitDestinationService::class)->notifyDestinationReceivers($visitingDetails);
             } catch (\Exception $exception) {
             }
         }
@@ -338,8 +425,8 @@ class CheckInController extends Controller
     public function show(Request $request, $id)
     {
         $visitingDetails = VisitingDetails::find($id);
-        $visitorDetail = VisitingDetails::where('visitor_id', $visitingDetails->visitor_id)->first();
-        $visitingDetails['photo'] = $visitorDetail->images;
+        // Usar la imagen del VisitingDetails actual, no del primero
+        $visitingDetails['photo'] = $visitingDetails->images;
 
         if ($visitingDetails) {
             return view('frontend.check-in.show', compact('visitingDetails'));
@@ -644,5 +731,46 @@ class CheckInController extends Controller
                 return redirect()->route('check-in.step-one');
             }
         }
+    }
+
+    private function getUserHeadquartersId(): ?int
+    {
+        $user = auth()->user();
+        if (!$user || (!$user->hasRole('supervisor') && !$user->hasRole('Reception'))) {
+            return null;
+        }
+
+        $headquartersId = optional($user->employee)->headquarters_id;
+
+        return $headquartersId ? (int) $headquartersId : null;
+    }
+
+    private function employeesForVisitorForm()
+    {
+        $query = Employee::query()->where('status', Status::ACTIVE);
+
+        $headquartersId = $this->getUserHeadquartersId();
+        if ($headquartersId) {
+            $query->where('headquarters_id', $headquartersId);
+        }
+
+        return $query->orderBy('first_name')->orderBy('last_name')->get();
+    }
+
+    private function employeeAllowedForCurrentUser(?int $employeeId): bool
+    {
+        if (!$employeeId) {
+            return false;
+        }
+
+        $headquartersId = $this->getUserHeadquartersId();
+        if (!$headquartersId) {
+            return Employee::where('id', $employeeId)->where('status', Status::ACTIVE)->exists();
+        }
+
+        return Employee::where('id', $employeeId)
+            ->where('status', Status::ACTIVE)
+            ->where('headquarters_id', $headquartersId)
+            ->exists();
     }
 }

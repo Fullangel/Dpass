@@ -10,12 +10,14 @@ use App\Models\PreRegister;
 use App\Enums\VisitorStatus;
 use Illuminate\Http\Request;
 use App\Models\VisitingDetails;
+use App\Support\PurposeNormalizer;
 use App\Http\Requests\VisitorRequest;
 use App\Http\Services\JwtTokenService;
 use App\Notifications\EmployeConfirmation;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\Notifications\SendVisitorToEmployee;
 use App\Http\Services\PushNotificationService;
+use App\Services\VisitDestinationService;
 use Spatie\ImageOptimizer\OptimizerChainFactory;
 
 class VisitorService
@@ -196,13 +198,16 @@ class VisitorService
         $visitor = Visitor::create($input);
 
         if ($visitor) {
+            // Obtener el empleado para mapear correctamente user_id
+            $employee = \App\Models\Employee::find($request->input('employee_id'));
             $visiting['reg_no'] = $reg_no;
-            $visiting['purpose'] = $request->input('purpose');
+            $visiting['purpose'] = PurposeNormalizer::canonicalize($request->input('purpose'));
             $visiting['company_name'] = $request->input('company_name');
             $visiting['employee_id'] = $request->input('employee_id');
             $visiting['visitor_id'] = $visitor->id;
             $visiting['status'] = VisitorStatus::PENDDING;
-            $visiting['user_id'] = $request->input('employee_id');
+            // user_id debe referenciar a users.id (usuario del empleado o usuario actual)
+            $visiting['user_id'] = $employee && $employee->user_id ? $employee->user_id : $userId;
             
             // Obtener el usuario autenticado
             $currentUser = auth()->user();
@@ -221,6 +226,7 @@ class VisitorService
             $visiting['creator_type'] = 'App\Models\User';
             $visiting['editor_type'] = 'App\Models\User';
             $visiting['editor_id'] = $userId;
+            app(VisitDestinationService::class)->applyToVisitingPayload($visiting, $employee);
             $visitingDetails = VisitingDetails::create($visiting);
             if ($request->file('image')) {
                 $visitingDetails->addMedia($request->file('image'))->toMediaCollection('visitor');
@@ -241,6 +247,11 @@ class VisitorService
 
             try {
                 app(PushNotificationService::class)->sendPushNotification($visitingDetails, $visitingDetails->employee->email);
+            } catch (\Exception $exception) {
+            }
+
+            try {
+                app(VisitDestinationService::class)->notifyDestinationReceivers($visitingDetails);
             } catch (\Exception $exception) {
             }
         } else {
@@ -275,12 +286,18 @@ class VisitorService
         $visitingDetails->visitor->update($input);
 
         if ($visitingDetails) {
-            $visiting['purpose'] = $request->input('purpose');
+            // Obtener el empleado para mapear correctamente user_id
+            $employee = \App\Models\Employee::find($request->input('employee_id'));
+
+            $visiting['purpose'] = PurposeNormalizer::canonicalize($request->input('purpose'));
             $visiting['company_name'] = $request->input('company_name');
             $visiting['employee_id'] = $request->input('employee_id');
             $visiting['visitor_id'] = $visitingDetails->visitor->id;
             $visiting['status'] = Status::ACTIVE;
-            $visiting['user_id'] = $request->input('employee_id');
+            // user_id debe referenciar a users.id (usuario del empleado o usuario actual)
+            $currentUser = auth()->user();
+            $userId = $currentUser ? $currentUser->id : 1;
+            $visiting['user_id'] = $employee && $employee->user_id ? $employee->user_id : $userId;
             
             // Obtener el usuario autenticado
             $currentUser = auth()->user();
@@ -294,7 +311,8 @@ class VisitorService
                 $visiting['region_id'] = $request->input('region_id');
                 $visiting['headquarters_id'] = $request->input('headquarters_id');
             }
-            
+
+            app(VisitDestinationService::class)->applyToVisitingPayload($visiting, $employee);
             $visitingDetails->update($visiting);
         }
 
@@ -348,13 +366,19 @@ class VisitorService
         QRCode::size(300)->format('png')->generate(route('checkin.visitor-details', preg_replace("/[^0-9]/", "", $request['phone'])), $file);
         $visitor->save();
         if ($visitor) {
+            // Obtener el empleado para mapear correctamente user_id
+            $employee = \App\Models\Employee::find($request->input('employee_id'));
+
             $visiting['reg_no'] = $reg_no;
-            $visiting['purpose'] = $request->input('purpose');
+            $visiting['purpose'] = PurposeNormalizer::canonicalize($request->input('purpose'));
             $visiting['company_name'] = $request->input('company_name');
             $visiting['employee_id'] = $request->input('employee_id');
             $visiting['visitor_id'] = $visitor->id;
             $visiting['status'] = VisitorStatus::PENDDING;
-            $visiting['user_id'] = $request->input('employee_id');
+            // user_id debe referenciar a users.id (usuario del empleado o usuario actual)
+            $currentUser = auth()->user();
+            $userId = $currentUser ? $currentUser->id : 1;
+            $visiting['user_id'] = $employee && $employee->user_id ? $employee->user_id : $userId;
             
             // Obtener el usuario autenticado
             $currentUser = auth()->user();
@@ -373,6 +397,7 @@ class VisitorService
             $visiting['creator_type'] = 'App\Models\User';
             $visiting['editor_type'] = 'App\Models\User';
             $visiting['editor_id'] = 1;
+            app(VisitDestinationService::class)->applyToVisitingPayload($visiting, $employee);
             $visitingDetails = VisitingDetails::create($visiting);
             if ($request->file('image')) {
                 $visitingDetails->addMedia($request->file('image'))->toMediaCollection('visitor');
@@ -394,6 +419,11 @@ class VisitorService
 
             try {
                 app(PushNotificationService::class)->sendPushNotification($visitingDetails, $visitingDetails->employee->email);
+            } catch (\Exception $exception) {
+            }
+
+            try {
+                app(VisitDestinationService::class)->notifyDestinationReceivers($visitingDetails);
             } catch (\Exception $exception) {
             }
         } else {

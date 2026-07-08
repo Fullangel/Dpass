@@ -156,7 +156,7 @@
                                     </div>
                                     @enderror
                                 </div>
-                                @if($is_admin)
+                                @if(!empty($can_assign_role))
                                 <div class="form-group col">
                                     <label>{{ __('employee.role') }}</label> <span class="text-danger">*</span>
                                     <select name="role_id" class="form-control @error('role_id') is-invalid @enderror">
@@ -175,6 +175,24 @@
                                 </div>
                                 @endif
                             </div>
+                            @if(!empty($can_assign_role) && isset($visitDestinations))
+                            <div class="form-row">
+                                <div class="form-group col">
+                                    <label>Destinos de visita (recepcion secundaria)</label>
+                                    <select name="visit_destination_ids[]" id="visit_destination_ids" class="form-control select2" multiple>
+                                        @foreach($visitDestinations as $visitDestination)
+                                            <option value="{{ $visitDestination->id }}"
+                                                {{ in_array($visitDestination->id, old('visit_destination_ids', $assignedVisitDestinationIds ?? []), true) ? 'selected' : '' }}>
+                                                {{ $visitDestination->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        Asigne aqui la cola que vera este usuario cuando registren visitas hacia ese destino.
+                                    </small>
+                                </div>
+                            </div>
+                            @endif
                             <div class="form-row">
                                 <div class="form-group col">
                                     <label for="region_id">{{ __('region.region') }} <span class="text-danger">*</span></label>
@@ -205,6 +223,46 @@
                                         @endforeach
                                     </select>
                                     @error('headquarters_id')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col">
+                                    <label>{{ __('employee.current_password') }}</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" value="••••••••" readonly
+                                            style="background-color: #e9ecef; cursor: not-allowed;">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text">
+                                                <i class="fas fa-lock"></i> {{ __('employee.password_set') }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <small class="form-text text-muted">{{ __('employee.password_change_hint') }}</small>
+                                </div>
+                                <div class="form-group col">
+                                    <label>{{ __('employee.new_password') }}</label>
+                                    <input type="password" name="password"
+                                        class="form-control @error('password') is-invalid @enderror"
+                                        placeholder="{{ __('employee.leave_blank_to_keep') }}"
+                                        autocomplete="new-password">
+                                    @error('password')
+                                    <div class="invalid-feedback">
+                                        {{ $message }}
+                                    </div>
+                                    @enderror
+                                </div>
+                                <div class="form-group col">
+                                    <label>{{ __('employee.confirm_new_password') }}</label>
+                                    <input type="password" name="password_confirmation"
+                                        class="form-control @error('password_confirmation') is-invalid @enderror"
+                                        placeholder="{{ __('employee.confirm_new_password') }}"
+                                        autocomplete="new-password">
+                                    @error('password_confirmation')
                                     <div class="invalid-feedback">
                                         {{ $message }}
                                     </div>

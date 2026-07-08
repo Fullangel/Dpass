@@ -30,4 +30,10 @@ return array (
   'download' => 'Download Qr',
   'role' => 'Role',
   'select_role' => 'Select Role',
+  'current_password' => 'Current Password',
+  'new_password' => 'New Password',
+  'confirm_new_password' => 'Confirm New Password',
+  'password_set' => 'Password Set',
+  'password_change_hint' => 'Leave blank to keep current password',
+  'leave_blank_to_keep' => 'Leave blank to keep current password',
 );

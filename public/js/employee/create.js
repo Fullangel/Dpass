@@ -14,6 +14,13 @@ $(document).ready(function () {
         autoclose: true
     })
 
+    if ($('#visit_destination_ids').length) {
+        $('#visit_destination_ids').select2({
+            placeholder: 'Seleccione destinos de visita',
+            width: '100%',
+        });
+    }
+
     // Verificar si es supervisor (los campos estarán deshabilitados)
     var isSupervisor = $('#region_id').prop('disabled') && $('#headquarters_id').prop('disabled');
 

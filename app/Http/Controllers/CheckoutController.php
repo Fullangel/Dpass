@@ -50,7 +50,7 @@ class CheckoutController extends Controller
     public function update(VisitingDetails $visitingDetails)
     {
 
-        $visitingDetails->checkout_at = date('y-m-d H:i');
+        $visitingDetails->checkout_at = date('Y-m-d H:i');
         $visitingDetails->save();
         return redirect()->route('/')->with('success', 'Successfully Check-Out');
     }

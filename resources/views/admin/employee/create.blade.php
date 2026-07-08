@@ -265,7 +265,7 @@ $(document).ready(function() {
                                     </div>
                                     @enderror
                                 </div>
-                                @if($is_admin)
+                                @if(!empty($can_assign_role))
                                 <div class="form-group col">
                                     <label for="role_id">{{ __('employee.role') }}</label> <span class="text-danger">*</span>
                                     <select id="role_id" name="role_id" class="form-control @error('role_id') is-invalid @enderror">
@@ -283,6 +283,21 @@ $(document).ready(function() {
                                 </div>
                                 @endif
                             </div>
+                            @if(!empty($can_assign_role) && isset($visitDestinations))
+                            <div class="form-row">
+                                <div class="form-group col">
+                                    <label>Destinos de visita (recepcion secundaria)</label>
+                                    <select name="visit_destination_ids[]" id="visit_destination_ids" class="form-control select2" multiple>
+                                        @foreach($visitDestinations as $visitDestination)
+                                            <option value="{{ $visitDestination->id }}"
+                                                {{ in_array($visitDestination->id, old('visit_destination_ids', []), true) ? 'selected' : '' }}>
+                                                {{ $visitDestination->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            @endif
 
                             <div class="form-row">
                                 <div class="form-group col">

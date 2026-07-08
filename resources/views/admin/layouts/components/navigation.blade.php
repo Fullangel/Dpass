@@ -17,7 +17,15 @@
         </li>
         @if(setting('front_end_enable_disable') == 1)
         <li class="dropdown">
-            <a data-toggle="tooltip" data-placement="bottom" title="Go to Frontend" href="{{ route('/') }}" class="nav-link nav-link-lg beep" target="_blank"><i class="fa fa-globe"></i></a>
+            {{-- Botón "Go to Frontend" debe llevar al home público (/home) --}}
+            <a data-toggle="tooltip"
+               data-placement="bottom"
+               title="Go to Frontend"
+               href="{{ route('home') }}"
+               class="nav-link nav-link-lg beep"
+               target="_blank">
+                <i class="fa fa-globe"></i>
+            </a>
         </li>
         @endif
         <li class="dropdown">

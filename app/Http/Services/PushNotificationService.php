@@ -152,18 +152,47 @@ class PushNotificationService
 
     public function sendWebNotification($visitingDetails)
     {
-        $user_id = $visitingDetails->employee->user->id;
+        if (! $visitingDetails->employee || ! $visitingDetails->employee->user) {
+            return false;
+        }
+
+        return $this->sendWebNotificationToUsers(
+            $visitingDetails,
+            collect([$visitingDetails->employee->user]),
+            'New Visitor #' . $visitingDetails->visitor->name,
+            'You have a new visitor named ' . $visitingDetails->visitor->name . ' The visitor phone number is ' . $visitingDetails->visitor->phone
+        );
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, User>|array<int, User>  $users
+     */
+    public function sendWebNotificationToUsers($visitingDetails, $users, ?string $title = null, ?string $body = null)
+    {
+        $tokens = collect($users)
+            ->pluck('web_token')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($tokens === []) {
+            return false;
+        }
+
+        $visitorName = optional($visitingDetails->visitor)->name ?? 'visitante';
+        $visitorPhone = optional($visitingDetails->visitor)->phone ?? '';
+
         $url = 'https://fcm.googleapis.com/fcm/send';
-        $FcmToken = User::where('id',$user_id)->whereNotNull('web_token')->pluck('web_token')->all();
         $serverKey = env('FCM_SECRET_KEY');
         $data = [
-            "registration_ids" => $FcmToken,
-            "notification" => [
-                "title" => "New Visitor #" . $visitingDetails->visitor->name,
-                "body" => 'You have a new visitor named ' . $visitingDetails->visitor->name. ' The visitor phone number is ' . $visitingDetails->visitor->phone,
-                'sound'        => 'default', // Optional
-                'icon'         => public_path('images/fav.png'),
-            ]
+            'registration_ids' => $tokens,
+            'notification' => [
+                'title' => $title ?? ('New Visitor #' . $visitorName),
+                'body' => $body ?? ('You have a new visitor named ' . $visitorName . ' The visitor phone number is ' . $visitorPhone),
+                'sound' => 'default',
+                'icon' => public_path('images/fav.png'),
+            ],
         ];
         $encodedData = json_encode($data);
 
@@ -180,17 +209,16 @@ class PushNotificationService
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
         curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
-        // Disabling SSL Certificate support temporarly
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $encodedData);
-        // Execute post
         $result = curl_exec($ch);
-        if ($result === FALSE) {
-            die('Curl failed: ' . curl_error($ch));
+        if ($result === false) {
+            curl_close($ch);
+            return false;
         }
-        // Close connection
+
         curl_close($ch);
-        // FCM response
+
         return true;
     }
 }

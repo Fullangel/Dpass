@@ -17,9 +17,14 @@
 <!-- Template JS File -->
 <script src="{{ asset('assets/js/scripts.js') }}"></script>
 <script src="{{ asset('js/custom.js') }}"></script>
-<script src="https://www.gstatic.com/firebasejs/8.3.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.3.2/firebase-messaging.js"></script>
-{{-- <script src="https://www.gstatic.com/firebasejs/8.3.2/firebase.js"></script> --}}
+@php
+    $fcmProjectId = trim((string) setting('projectId'));
+    $fcmEnabled = $fcmProjectId !== '';
+@endphp
+@if ($fcmEnabled)
+<script src="{{ asset('vendor/offline-libs/firebase-app.js') }}"></script>
+<script src="{{ asset('vendor/offline-libs/firebase-messaging.js') }}"></script>
+@endif
 
 <script type="text/javascript">
     var beep = document.getElementById("myAudio1");
@@ -33,67 +38,61 @@
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
         });
-         
-        // web_token
-        var firebaseConfig = {
-            apiKey: "{{ setting('apiKey') }}",
-            authDomain: "{{ setting('authDomain') }}",
-            projectId: "{{ setting('projectId') }}",
-            storageBucket: "{{ setting('storageBucket') }}",
-            messagingSenderId: "{{ setting('messagingSenderId') }}",
-            appId: "{{ setting('appId') }}",
-            measurementId: "{{ setting('measurementId') }}"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const messaging = firebase.messaging();
 
-        startFCM();
-            $.ajax({
-                    url: "https://entrada.pro/public/api/v1/me"
-            }).then(function(data) {
-                console.log(data)
-             });
-        function startFCM() {
-            messaging.requestPermission()
-                .then(function() {
-                    return messaging.getToken()
-                })
-                .then(function(response) {
-                    $.ajax({
-                        url: '{{ route("admin.store.token") }}',
-                        type: 'POST',
-                        data: {
-                            token: response
-                        },
-                        dataType: 'JSON',
-                        success: function(response) {
-
-                        },
-                        error: function(error) {
-
-                        },
-                    });
-                }).catch(function(error) {
-
-                });
-        }
-        messaging.onMessage(function(payload) {
-            const title = payload.notification.title;
-            const options = {
-                body: payload.notification.body,
-                icon: payload.notification.icon,
+        @if ($fcmEnabled)
+        (function () {
+            var firebaseConfig = {
+                apiKey: @json(setting('apiKey')),
+                authDomain: @json(setting('authDomain')),
+                projectId: @json($fcmProjectId),
+                storageBucket: @json(setting('storageBucket')),
+                messagingSenderId: @json(setting('messagingSenderId')),
+                appId: @json(setting('appId')),
+                measurementId: @json(setting('measurementId'))
             };
+            firebase.initializeApp(firebaseConfig);
+            var messaging = firebase.messaging();
 
-            sound();
-            window.location.reload();
-            new Notification(title, options);
-        });
+            function startFCM() {
+                messaging.requestPermission()
+                    .then(function () {
+                        return messaging.getToken();
+                    })
+                    .then(function (token) {
+                        if (!token) {
+                            return;
+                        }
+                        $.ajax({
+                            url: '{{ route("admin.store.token") }}',
+                            type: 'POST',
+                            data: { token: token },
+                            dataType: 'JSON'
+                        });
+                    })
+                    .catch(function () {});
+            }
+
+            startFCM();
+
+            messaging.onMessage(function (payload) {
+                var title = (payload.notification && payload.notification.title) ? payload.notification.title : '';
+                var options = {
+                    body: payload.notification ? payload.notification.body : '',
+                    icon: payload.notification ? payload.notification.icon : ''
+                };
+                sound();
+                window.location.reload();
+                if (title && window.Notification && Notification.permission === 'granted') {
+                    new Notification(title, options);
+                }
+            });
+        })();
+        @endif
 
         @if(session('success'))
         iziToast.success({
             title: 'Success',
-            message: '{{ session('
-            success ') }}',
+            message: @json(session('success')),
             position: 'topRight'
         });
         @endif
@@ -101,8 +100,7 @@
         @if(session('error'))
         iziToast.error({
             title: 'Error',
-            message: '{{ session('
-            error ') }}',
+            message: @json(session('error')),
             position: 'topRight'
         });
         @endif

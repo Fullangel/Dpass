@@ -59,7 +59,7 @@ class VisitorController extends BackendController
 
     public function create(Request $request)
     {
-        $this->data['employees'] = Employee::where('status', Status::ACTIVE)->get();
+        $this->data['employees'] = $this->employeesForVisitorForm();
         $this->data['regions'] = Region::all();
         $this->data['headquarters'] = Headquarters::all();
 
@@ -77,6 +77,10 @@ class VisitorController extends BackendController
 
         $employee = Employee::with(['region', 'headquarters'])->find($request->employee_id);
 
+        if (!$employee || !$this->employeeAllowedForCurrentUser((int) $employee->id)) {
+            return response()->json(['message' => 'Funcionario no disponible para su sede.'], 403);
+        }
+
         return response()->json([
             'region_id' => $employee->region_id,
             'region_name' => $employee->region->name ?? null,
@@ -87,6 +91,13 @@ class VisitorController extends BackendController
 
     public function store(VisitorRequest $request)
     {
+        if (!$this->employeeAllowedForCurrentUser((int) $request->input('employee_id'))) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->withErrors(['employee_id' => 'El funcionario seleccionado no pertenece a su sede.']);
+        }
+
         $visitingDetail = $this->visitorService->make($request);
         
         // Optimizar imagen si existe
@@ -121,11 +132,8 @@ class VisitorController extends BackendController
     {
         $this->data['visitingDetails'] = $this->visitorService->find($id);
         if ($this->data['visitingDetails']) {
-            // Verificar que el supervisor solo pueda ver visitas de su sede
-            if (auth()->user()->hasRole('supervisor')) {
-                if ($this->data['visitingDetails']->headquarters_id != auth()->user()->headquarters_id) {
-                    return redirect()->route('admin.visitors.index')->withError('No tiene permiso para ver esta visita.');
-                }
+            if (!$this->visitBelongsToUserHeadquarters($this->data['visitingDetails'])) {
+                return redirect()->route('admin.visitors.index')->withError('No tiene permiso para ver esta visita.');
             }
             return view('admin.visitor.show', $this->data);
         } else {
@@ -149,7 +157,7 @@ class VisitorController extends BackendController
 
         $visitingDetail = VisitingDetails::where('reg_no', $id)->first();
         if ($visitingDetail && (!$visitingDetail->checkout_at)) {
-            $visitingDetail->checkout_at = date('y-m-d H:i');
+            $visitingDetail->checkout_at = date('Y-m-d H:i');
             $visitingDetail->save();
             return redirect()->route('admin.visitors.index')->withSuccess('Successfully Checked-Out!');
         } elseif (!$visitingDetail) {
@@ -167,14 +175,11 @@ class VisitorController extends BackendController
             return redirect()->route('admin.visitors.index');
         }
         
-        // Verificar que el supervisor o recepción solo puedan editar visitas de su sede
-        if (auth()->user()->hasRole('supervisor') || auth()->user()->hasRole('Reception')) {
-            if ($this->data['visitingDetails']->headquarters_id != auth()->user()->headquarters_id) {
-                return redirect()->route('admin.visitors.index')->withError('No tiene permiso para editar esta visita.');
-            }
+        if (!$this->visitBelongsToUserHeadquarters($this->data['visitingDetails'])) {
+            return redirect()->route('admin.visitors.index')->withError('No tiene permiso para editar esta visita.');
         }
-        
-        $this->data['employees'] = Employee::where('status', Status::ACTIVE)->get();
+
+        $this->data['employees'] = $this->employeesForVisitorForm();
         $this->data['regions'] = Region::all();
         $this->data['headquarters'] = Headquarters::all();
         
@@ -183,13 +188,17 @@ class VisitorController extends BackendController
 
     public function update(VisitorRequest $request, VisitingDetails $visitor)
     {
-        // Verificar que el supervisor o recepción solo puedan actualizar visitas de su sede
-        if (auth()->user()->hasRole('supervisor') || auth()->user()->hasRole('Reception')) {
-            if ($visitor->headquarters_id != auth()->user()->headquarters_id) {
-                return redirect()->route('admin.visitors.index')->withError('No tiene permiso para actualizar esta visita.');
-            }
+        if (!$this->visitBelongsToUserHeadquarters($visitor)) {
+            return redirect()->route('admin.visitors.index')->withError('No tiene permiso para actualizar esta visita.');
         }
-        
+
+        if (!$this->employeeAllowedForCurrentUser((int) $request->input('employee_id'))) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->withErrors(['employee_id' => 'El funcionario seleccionado no pertenece a su sede.']);
+        }
+
         $visitingDetail = $this->visitorService->update($request, $visitor->id);
         // Optimizar imagen si existe
         if ($visitingDetail->getFirstMediaUrl('visitor')) {
@@ -208,14 +217,11 @@ class VisitorController extends BackendController
 
     public function destroy($id)
     {
-        // Verificar que el supervisor o recepción solo puedan eliminar visitas de su sede
-        if (auth()->user()->hasRole('supervisor') || auth()->user()->hasRole('Reception')) {
-            $visitor = VisitingDetails::find($id);
-            if (!$visitor || $visitor->headquarters_id != auth()->user()->headquarters_id) {
-                return redirect()->route('admin.visitors.index')->withError('No tiene permiso para eliminar esta visita.');
-            }
+        $visitor = VisitingDetails::find($id);
+        if (!$visitor || !$this->visitBelongsToUserHeadquarters($visitor)) {
+            return redirect()->route('admin.visitors.index')->withError('No tiene permiso para eliminar esta visita.');
         }
-        
+
         $this->visitorService->delete($id);
         return redirect()->route('admin.visitors.index')->withSuccess('The data delete successfully!');
     }
@@ -223,17 +229,101 @@ class VisitorController extends BackendController
 
     public function getVisitor(Request $request)
     {
-        $visitingDetails = $this->visitorService->all();
-        $i            = 1;
-        $visitingDetailArray = [];
-        if (!blank($visitingDetails)) {
-            foreach ($visitingDetails as $visitingDetail) {
-                $visitingDetailArray[$i]          = $visitingDetail;
-                $visitingDetailArray[$i]['setID'] = $i;
-                $i++;
+        // Construimos un query Eloquent optimizado y lo dejamos en manos de DataTables (server-side real).
+        // Esto evita cargar todos los registros en memoria y elimina los timeouts.
+        $user = auth()->user();
+
+        $query = VisitingDetails::query()
+            ->with(['visitor', 'employee.user', 'region', 'headquarters'])
+            ->orderByDesc('id');
+
+        // Filtro por rol / sede equivalente a VisitorService::all()
+        if ($user && $user->getrole) {
+            $roleName = $user->getrole->name;
+
+            if ($roleName === 'Employee') {
+                if ($user->employee) {
+                    $query->where('employee_id', $user->employee->id);
+                } else {
+                    // Sin empleado asociado: no debe ver visitas
+                    $query->whereRaw('1 = 0');
+                }
+            } elseif ($roleName === 'supervisor' || $roleName === 'Reception') {
+                if ($user->employee && $user->employee->headquarters_id) {
+                    $query->where('headquarters_id', $user->employee->headquarters_id);
+                } else {
+                    $query->whereRaw('1 = 0');
+                }
             }
+            // Admin y otros roles ven todas las visitas (sin filtro extra)
         }
-        return Datatables::of($visitingDetailArray)
+
+        // Filtros adicionales por estado (si DataTables los envía)
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        $likeOperator = DB::connection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+
+        // Usamos DataTables sobre el query Eloquent (no método estático eloquent en esta versión).
+        // Búsqueda global: columnas presentadas (name, location, date, checkout, image, action)
+        // no existen en visiting_details; filterColumn evita SQL inválido (p. ej. visiting_details.name).
+        return Datatables::of($query)
+            ->addIndexColumn()
+
+            ->filterColumn('name', function ($query, $keyword) use ($likeOperator) {
+                $term = '%' . addcslashes((string) $keyword, '%_\\') . '%';
+                $query->whereHas('visitor', function ($q) use ($term, $likeOperator) {
+                    $q->where(function ($inner) use ($term, $likeOperator) {
+                        $inner->where('first_name', $likeOperator, $term)
+                            ->orWhere('last_name', $likeOperator, $term)
+                            ->orWhere('national_identification_no', $likeOperator, $term)
+                            ->orWhere('phone', $likeOperator, $term)
+                            ->orWhere('email', $likeOperator, $term);
+                    });
+                });
+            })
+            ->filterColumn('visitor_id', function ($query, $keyword) use ($likeOperator) {
+                $term = '%' . addcslashes((string) $keyword, '%_\\') . '%';
+                $query->whereHas('visitor', function ($q) use ($term, $likeOperator) {
+                    $q->where('national_identification_no', $likeOperator, $term);
+                });
+            })
+            ->filterColumn('employee_id', function ($query, $keyword) use ($likeOperator) {
+                $term = '%' . addcslashes((string) $keyword, '%_\\') . '%';
+                $query->where(function ($outer) use ($term, $likeOperator) {
+                    $outer->whereHas('employee.user', function ($q) use ($term, $likeOperator) {
+                        $q->where(function ($inner) use ($term, $likeOperator) {
+                            $inner->where('first_name', $likeOperator, $term)
+                                ->orWhere('last_name', $likeOperator, $term)
+                                ->orWhere('email', $likeOperator, $term);
+                        });
+                    })->orWhereHas('employee', function ($q) use ($term, $likeOperator) {
+                        $q->where(function ($inner) use ($term, $likeOperator) {
+                            $inner->where('first_name', $likeOperator, $term)
+                                ->orWhere('last_name', $likeOperator, $term);
+                        });
+                    });
+                });
+            })
+            ->filterColumn('location', function ($query, $keyword) use ($likeOperator) {
+                $term = '%' . addcslashes((string) $keyword, '%_\\') . '%';
+                $query->where(function ($q) use ($term, $likeOperator) {
+                    $q->whereHas('region', function ($rq) use ($term, $likeOperator) {
+                        $rq->where('name', $likeOperator, $term);
+                    })->orWhereHas('headquarters', function ($hq) use ($term, $likeOperator) {
+                        $hq->where('name', $likeOperator, $term);
+                    });
+                });
+            })
+            ->filterColumn('date', function ($query, $keyword) use ($likeOperator) {
+                $term = '%' . addcslashes((string) $keyword, '%_\\') . '%';
+                $query->where('checkin_at', $likeOperator, $term);
+            })
+            ->filterColumn('checkout', function ($query, $keyword) use ($likeOperator) {
+                $term = '%' . addcslashes((string) $keyword, '%_\\') . '%';
+                $query->where('checkout_at', $likeOperator, $term);
+            })
 
             ->addColumn('action', function ($visitingDetail) {
                 $retAction = '';
@@ -268,14 +358,14 @@ class VisitorController extends BackendController
                 return '<figure class="avatar mr-2"><img src="' . $visitingDetail->images . '" alt=""></figure>';
             })
             ->editColumn('visitor_id', function ($visitingDetail) {
-                return $visitingDetail->visitor->national_identification_no;
+                return optional($visitingDetail->visitor)->national_identification_no;
             })
 
             ->editColumn('phone', function ($visitingDetail) {
                 return Str::limit(optional($visitingDetail->visitor)->phone, 50);
             })
             ->editColumn('employee_id', function ($visitingDetail) {
-                return optional($visitingDetail->employee->user)->name;
+                return optional(optional($visitingDetail->employee)->user)->name;
             })
             ->editColumn('location', function ($visitingDetail) {
                 $region = optional($visitingDetail->region)->name;
@@ -329,14 +419,15 @@ class VisitorController extends BackendController
             ->editColumn('id', function ($visitingDetail) {
                 return $visitingDetail->setID;
             })
-            ->rawColumns(['name', 'action', 'location'])
+            ->blacklist(['image', 'action'])
+            ->rawColumns(['action', 'status', 'image'])
             ->escapeColumns([])
             ->make(true);
     }
     public function checkout(VisitingDetails $visitingDetail)
     {
 
-        $visitingDetail->checkout_at = date('y-m-d H:i');
+        $visitingDetail->checkout_at = date('Y-m-d H:i');
         $visitingDetail->save();
         return redirect()->route('admin.visitors.index')->withSuccess('Successfully Check-Out!');
     }
@@ -345,7 +436,7 @@ class VisitorController extends BackendController
     {
         $visitor         = VisitingDetails::findOrFail($id);
         $visitor->status = $status;
-        $visitor->checkin_at = date('y-m-d H:i');
+        $visitor->checkin_at = date('Y-m-d H:i');
         $visitor->save();
 
         try {
@@ -372,5 +463,62 @@ class VisitorController extends BackendController
         $visitor->save();
 
         return redirect()->back()->withSuccess('Visitor Disable successfully!');
+    }
+
+    /**
+     * Sede del usuario recepción/supervisor (vía registro employee), o null si no aplica.
+     */
+    private function getUserHeadquartersId(): ?int
+    {
+        $user = auth()->user();
+        if (!$user || (!$user->hasRole('supervisor') && !$user->hasRole('Reception'))) {
+            return null;
+        }
+
+        $headquartersId = optional($user->employee)->headquarters_id;
+
+        return $headquartersId ? (int) $headquartersId : null;
+    }
+
+    /**
+     * Funcionarios visibles al registrar visitante: recepción/supervisor solo los de su sede.
+     */
+    private function employeesForVisitorForm()
+    {
+        $query = Employee::query()->where('status', Status::ACTIVE);
+
+        $headquartersId = $this->getUserHeadquartersId();
+        if ($headquartersId) {
+            $query->where('headquarters_id', $headquartersId);
+        }
+
+        return $query->orderBy('first_name')->orderBy('last_name')->get();
+    }
+
+    private function employeeAllowedForCurrentUser(?int $employeeId): bool
+    {
+        if (!$employeeId) {
+            return false;
+        }
+
+        $headquartersId = $this->getUserHeadquartersId();
+        if (!$headquartersId) {
+            return Employee::where('id', $employeeId)->where('status', Status::ACTIVE)->exists();
+        }
+
+        return Employee::where('id', $employeeId)
+            ->where('status', Status::ACTIVE)
+            ->where('headquarters_id', $headquartersId)
+            ->exists();
+    }
+
+    private function visitBelongsToUserHeadquarters(VisitingDetails $visit): bool
+    {
+        $headquartersId = $this->getUserHeadquartersId();
+        if (!$headquartersId) {
+            return true;
+        }
+
+        return (int) $visit->headquarters_id === $headquartersId;
     }
 }

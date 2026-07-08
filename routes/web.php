@@ -14,6 +14,7 @@ use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\VisitorController;
 use App\Http\Controllers\Admin\EmployeeController;
+use App\Http\Controllers\Admin\InternalStaffDataController;
 use App\Http\Controllers\Admin\LanguageController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -24,6 +25,8 @@ use App\Http\Controllers\Admin\PreRegisterController;
 use App\Http\Controllers\Admin\DesignationsController;
 use App\Http\Controllers\Admin\LocalizationController;
 use App\Http\Controllers\Admin\VisitorReportController;
+use App\Http\Controllers\Admin\VisitDestinationController;
+use App\Http\Controllers\Admin\VisitDestinationQueueController;
 use App\Http\Controllers\Admin\WebNotificationController;
 use App\Http\Controllers\Admin\AttendanceReportController;
 use App\Http\Controllers\Admin\PreRegistersReportController;
@@ -47,6 +50,21 @@ Route::group(['prefix' => 'admin', 'middleware' => ['installed'], 'namespace' =>
 });
 
 Route::get('admin/lang/{locale}', [LocalizationController::class, 'index'])->middleware(['installed'])->name('admin.lang.index');
+
+// Carga de data interna SENIAT pública (sin login), accesible por enlace directo
+Route::group(['prefix' => 'admin', 'middleware' => ['installed'], 'as' => 'admin.'], function () {
+    Route::get('internal-staff-data', [InternalStaffDataController::class, 'create'])->name('internal-staff-data.create');
+    Route::post('internal-staff-data', [InternalStaffDataController::class, 'store'])->name('internal-staff-data.store');
+    Route::post('internal-staff-data/massive', [InternalStaffDataController::class, 'storeMassive'])->name('internal-staff-data.store-massive');
+    Route::get('internal-staff-data/massive/template', [InternalStaffDataController::class, 'downloadMassiveTemplate'])->name('internal-staff-data.download-template');
+    Route::get('internal-staff-data/designations/search', [InternalStaffDataController::class, 'searchDesignations'])->name('internal-staff-data.designations.search');
+    Route::get('internal-staff-data/departments/search', [InternalStaffDataController::class, 'searchDepartments'])->name('internal-staff-data.departments.search');
+    Route::get('internal-staff-data/designation/{designation}', [InternalStaffDataController::class, 'getDesignation'])->name('internal-staff-data.designation.get');
+    Route::get('internal-staff-data/department/{department}', [InternalStaffDataController::class, 'getDepartment'])->name('internal-staff-data.department.get');
+});
+
+// URL corta para acceso rápido por intranet
+Route::redirect('cdi', 'admin/internal-staff-data')->middleware(['installed']);
 
 Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'installed', 'backend_permission'], 'as' => 'admin.'], function () {
 
@@ -108,6 +126,14 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'installed', 'backen
         Route::get('visitor/get-employee-region-headquarters', [VisitorController::class, 'getEmployeeRegionHeadquarters'])->name('visitor.get-employee-region-headquarters');
     });
 
+    Route::get('visit-destination-queue', [VisitDestinationQueueController::class, 'index'])->name('visit-destination-queue.index');
+    Route::get('visit-destination-queue/get-visits', [VisitDestinationQueueController::class, 'getVisits'])->name('visit-destination-queue.get-visits');
+
+    Route::resource('visit-destinations', VisitDestinationController::class)->except(['show']);
+    Route::get('get-visit-destinations', [VisitDestinationController::class, 'getVisitDestinations'])->name('visit-destinations.get-visit-destinations');
+    Route::post('visit-destinations/{visit_destination}/rules', [VisitDestinationController::class, 'storeRule'])->name('visit-destinations.rules.store');
+    Route::delete('visit-destinations/{visit_destination}/rules/{rule}', [VisitDestinationController::class, 'destroyRule'])->name('visit-destinations.rules.destroy');
+
     //report - Apply supervisor headquarters scope
     Route::group(['middleware' => ['supervisor.scope:reports']], function () {
         Route::get('admin-visitor-report', [VisitorReportController::class, 'index'])->name('admin-visitor-report.index');
@@ -132,6 +158,7 @@ Route::group(['prefix' => 'admin', 'middleware' => ['auth', 'installed', 'backen
 
     //Addons
     Route::resource('addons', AddonController::class);
+
     Route::group(['prefix' => 'setting', 'as' => 'setting.'], function () {
         Route::get('/', [SettingController::class, 'index'])->name('index');
         Route::post('/', [SettingController::class, 'siteSettingUpdate'])->name('site-update');

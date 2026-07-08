@@ -72,6 +72,7 @@ class Kernel extends HttpKernel
         'backend_permission' => \App\Http\Middleware\IsHasBackendPermission::class,
         'frontend' => \App\Http\Middleware\FrontEnd::class,
         'supervisor.scope' => \App\Http\Middleware\SupervisorHeadquartersScope::class,
+        'visit_destination.access' => \App\Http\Middleware\EnsureVisitDestinationAccess::class,
 
     ];
 }

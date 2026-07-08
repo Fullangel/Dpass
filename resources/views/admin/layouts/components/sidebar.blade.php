@@ -25,6 +25,35 @@
             
             {!! $backendMenus !!}
 
+            @if(
+                auth()->check() &&
+                (
+                    auth()->user()->hasRole('Admin') ||
+                    auth()->user()->hasRole('admin') ||
+                    auth()->user()->hasRole('supervisor') ||
+                    auth()->user()->hasRole('Supervisor')
+                )
+            )
+                <li class="{{ request()->segment(2) === 'internal-staff-data' ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ route('admin.internal-staff-data.create') }}">
+                        <i class="fas fa-file-signature"></i>
+                        <span>Carga Data Interna</span>
+                    </a>
+                </li>
+            @endif
+
+            @if(
+                auth()->check() &&
+                app(\App\Services\VisitDestinationService::class)->userCanAccessDestinationQueue(auth()->user())
+            )
+                <li class="{{ request()->segment(2) === 'visit-destination-queue' ? 'active' : '' }}">
+                    <a class="nav-link" href="{{ route('admin.visit-destination-queue.index') }}">
+                        <i class="fas fa-route"></i>
+                        <span>Cola por destino</span>
+                    </a>
+                </li>
+            @endif
+
         </ul>
     </aside>
 </div>

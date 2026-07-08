@@ -7,6 +7,7 @@ use App\Http\Requests\EmployeeUpdateRequest;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\User;
+use App\Services\VisitDestinationService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
@@ -151,6 +152,12 @@ class EmployeeService
 
             $result = Employee::create($data);
 
+            if ($request->has('visit_destination_ids')) {
+                app(VisitDestinationService::class)->syncUserDestinations(
+                    $user,
+                    $request->input('visit_destination_ids', [])
+                );
+            }
 
         }
         return $result;
@@ -171,6 +178,12 @@ class EmployeeService
         $input['email'] = $request->input('email');
         $input['phone'] = $request->input('phone');
         $input['status']      = $request->input('status');
+        
+        // Actualizar contraseña solo si se proporciona
+        if ($request->filled('password')) {
+            $input['password'] = Hash::make($request->input('password'));
+        }
+        
         $user = User::find($employee->user_id);
         $user->update($input);
         
@@ -207,6 +220,13 @@ class EmployeeService
             QRCode::size(300)->format('png')->generate(route('checkin.visitor-details', preg_replace("/[^0-9]/", "", $request->input('phone'))), $file);
 
             $employee->update($data);
+
+            if ($request->has('visit_destination_ids')) {
+                app(VisitDestinationService::class)->syncUserDestinations(
+                    $user,
+                    $request->input('visit_destination_ids', [])
+                );
+            }
 
         }
         return $employee;

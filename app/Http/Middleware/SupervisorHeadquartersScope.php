@@ -37,25 +37,31 @@ class SupervisorHeadquartersScope
         $supervisorHeadquartersId = $supervisorEmployee->headquarters_id;
 
         // Apply headquarters scoping based on the resource type
+        $scopeResponse = null;
         switch ($resource) {
             case 'employees':
-                $this->scopeEmployees($request, $supervisorHeadquartersId);
+                $scopeResponse = $this->scopeEmployees($request, $supervisorHeadquartersId);
                 break;
             case 'departments':
-                $this->scopeDepartments($request, $supervisorHeadquartersId);
+                $scopeResponse = $this->scopeDepartments($request, $supervisorHeadquartersId);
                 break;
             case 'designations':
-                $this->scopeDesignations($request, $supervisorHeadquartersId);
+                $scopeResponse = $this->scopeDesignations($request, $supervisorHeadquartersId);
                 break;
             case 'pre-registers':
-                $this->scopePreRegisters($request, $supervisorHeadquartersId);
+                $scopeResponse = $this->scopePreRegisters($request, $supervisorHeadquartersId);
                 break;
             case 'visitors':
-                $this->scopeVisitors($request, $supervisorHeadquartersId);
+                $scopeResponse = $this->scopeVisitors($request, $supervisorHeadquartersId);
                 break;
             case 'reports':
-                $this->scopeReports($request, $supervisorHeadquartersId);
+                $scopeResponse = $this->scopeReports($request, $supervisorHeadquartersId);
                 break;
+        }
+
+        // Si el scope devolvió una respuesta (redirect, abort), devolverla
+        if ($scopeResponse instanceof \Symfony\Component\HttpFoundation\Response) {
+            return $scopeResponse;
         }
 
         // Store supervisor's headquarters ID in request for later use
@@ -66,24 +72,54 @@ class SupervisorHeadquartersScope
 
     protected function scopeEmployees($request, $headquartersId)
     {
-        // Obtener el usuario autenticado
-        $user = auth()->user();
-
         // For index requests, filter by headquarters
         if ($request->isMethod('GET') && !$request->route('employee')) {
             $request->merge(['headquarters_id' => $headquartersId]);
         }
-        
+
         // For specific employee operations, check if employee belongs to supervisor's headquarters
-        if ($request->route('employee')) {
-            $employeeId = $request->route('employee');
-            $employee = Employee::find($employeeId);
-            
-            if ($employee && $employee->headquarters_id != $headquartersId) {
-                return redirect()->route('admin.employees.index')
-                    ->withError('No tiene permiso para acceder a este empleado.');
-            }
+        $routeEmployee = $request->route('employee');
+        if (!$routeEmployee) {
+            return;
         }
+
+        // Obtener siempre una instancia única de Employee (el parámetro puede ser ID, modelo o colección por route binding)
+        $employee = $this->resolveEmployeeFromRoute($routeEmployee);
+
+        if (!$employee instanceof Employee) {
+            return;
+        }
+
+        // Permitir acceso si el empleado pertenece a la sede del supervisor
+        // (incluye el caso de edición para cambiar de sede: se valida el registro actual, el update se permite en el controlador)
+        if ((int) $employee->headquarters_id !== (int) $headquartersId) {
+            return redirect()->route('admin.employees.index')
+                ->withError('No tiene permiso para acceder a este empleado.');
+        }
+    }
+
+    /**
+     * Resuelve una instancia de Employee desde el parámetro de ruta.
+     * El parámetro puede ser: ID (int/string), modelo Employee ya resuelto, o en edge cases una colección.
+     *
+     * @param  mixed  $routeEmployee
+     * @return \App\Models\Employee|null
+     */
+    protected function resolveEmployeeFromRoute($routeEmployee)
+    {
+        if ($routeEmployee instanceof Employee) {
+            return $routeEmployee;
+        }
+
+        if ($routeEmployee instanceof \Illuminate\Support\Collection) {
+            return $routeEmployee->first();
+        }
+
+        if (is_numeric($routeEmployee) || is_string($routeEmployee)) {
+            return Employee::find($routeEmployee);
+        }
+
+        return null;
     }
 
     protected function scopeDepartments($request, $headquartersId)
@@ -149,18 +185,30 @@ class SupervisorHeadquartersScope
         
         // For specific visitor operations, check if visitor belongs to supervisor's headquarters
         if ($request->route('visitor')) {
-            $visitorId = $request->route('visitor');
-            $visitingDetail = \App\Models\VisitingDetails::find($visitorId);
+            $visitingDetail = $request->route('visitor');
             
-            if ($visitingDetail && $visitingDetail->headquarters_id != $headquartersId) {
+            // Si el parámetro no es una instancia del modelo VisitingDetails (podría ser un ID o incluso un modelo Visitor si el binding es confuso)
+            // Asumimos que si no es VisitingDetails, intentamos buscarlo. 
+            // CUIDADO: Si es un modelo Visitor, find() podría fallar o dar resultados erróneos si se busca en VisitingDetails.
+            // Pero mantendremos la lógica original de intentar buscar en VisitingDetails si no es el objeto esperado.
+            
+            if (!($visitingDetail instanceof \App\Models\VisitingDetails)) {
+                 $visitingDetail = \App\Models\VisitingDetails::find($visitingDetail);
+            }
+            
+            if ($visitingDetail instanceof \App\Models\VisitingDetails && $visitingDetail->headquarters_id != $headquartersId) {
                 abort(403, 'No tienes permiso para acceder a este visitante.');
             }
         }
         
         // For specific visitor operations using visiting_details route parameter
         if ($request->route('visitingDetail')) {
-            $visitingDetailId = $request->route('visitingDetail');
-            $visitingDetail = \App\Models\VisitingDetails::find($visitingDetailId);
+            $visitingDetail = $request->route('visitingDetail');
+            
+            // Si el parámetro no es una instancia del modelo, buscarlo por ID
+            if (!($visitingDetail instanceof \App\Models\VisitingDetails)) {
+                $visitingDetail = \App\Models\VisitingDetails::find($visitingDetail);
+            }
             
             if ($visitingDetail && $visitingDetail->headquarters_id != $headquartersId) {
                 abort(403, 'No tienes permiso para acceder a este visitante.');

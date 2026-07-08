@@ -88,6 +88,22 @@ Breadcrumbs::for ('designations/edit', function ($trail) {
     $trail->push(trans('validation.attributes.edit'));
 });
 
+// Dashboard / Visit Destinations
+Breadcrumbs::for('visit-destinations', function ($trail) {
+    $trail->parent('dashboard');
+    $trail->push('Destinos de visita', route('admin.visit-destinations.index'));
+});
+
+Breadcrumbs::for('visit-destinations/add', function ($trail) {
+    $trail->parent('visit-destinations');
+    $trail->push(trans('validation.attributes.add'));
+});
+
+Breadcrumbs::for('visit-destinations/edit', function ($trail) {
+    $trail->parent('visit-destinations');
+    $trail->push(trans('validation.attributes.edit'));
+});
+
 // Dashboard / Employees
 Breadcrumbs::for ('employees', function ($trail) {
     $trail->parent('dashboard');

@@ -18,6 +18,7 @@ return array (
   'administrators' => 'Administrators',
   'role' => 'Role',
   'settings' => 'Settings',
+  'visit_destinations' => 'Visit Destinations',
   'language' => 'Language',
   'users' => 'Users',
   'addons' => 'Addons',

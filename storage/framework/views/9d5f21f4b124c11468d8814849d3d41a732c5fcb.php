@@ -445,7 +445,7 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>
                                 </div>
-                                <?php if($is_admin): ?>
+                                <?php if(!empty($can_assign_role)): ?>
                                 <div class="form-group col">
                                     <label for="role_id"><?php echo e(__('employee.role')); ?></label> <span class="text-danger">*</span>
                                     <select id="role_id" name="role_id" class="form-control <?php $__errorArgs = ['role_id'];
@@ -478,6 +478,22 @@ unset($__errorArgs, $__bag); ?>
                                 </div>
                                 <?php endif; ?>
                             </div>
+                            <?php if(!empty($can_assign_role) && isset($visitDestinations)): ?>
+                            <div class="form-row">
+                                <div class="form-group col">
+                                    <label>Destinos de visita (recepcion secundaria)</label>
+                                    <select name="visit_destination_ids[]" id="visit_destination_ids" class="form-control select2" multiple>
+                                        <?php $__currentLoopData = $visitDestinations; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $visitDestination): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                            <option value="<?php echo e($visitDestination->id); ?>"
+                                                <?php echo e(in_array($visitDestination->id, old('visit_destination_ids', []), true) ? 'selected' : ''); ?>>
+                                                <?php echo e($visitDestination->name); ?>
+
+                                            </option>
+                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                    </select>
+                                </div>
+                            </div>
+                            <?php endif; ?>
 
                             <div class="form-row">
                                 <div class="form-group col">

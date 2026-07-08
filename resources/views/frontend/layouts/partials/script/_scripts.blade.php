@@ -21,12 +21,11 @@
 <script src="{{ asset('assets/js/theme.js') }}"></script>
 
 
-<script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/4.8.1/tinymce.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.9/summernote-bs4.js"></script>
+<script src="{{ asset('vendor/offline-libs/jquery.mousewheel.min.js') }}"></script>
+<script src="{{ asset('assets/modules/moment/min/moment.min.js') }}"></script>
+<script src="{{ asset('vendor/offline-libs/daterangepicker.min.js') }}"></script>
+<script src="{{ asset('vendor/offline-libs/tinymce.min.js') }}"></script>
+<script src="{{ asset('assets/modules/summernote/summernote-bs4.js') }}"></script>
 <script src="{{ asset('assets/modules/izitoast/dist/js/iziToast.min.js') }}"></script>
 
 <!-- Scripts -->

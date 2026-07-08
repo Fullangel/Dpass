@@ -30,5 +30,11 @@ return array (
   'download' => 'Descargar Código QR',
   'role' => 'Rol',
   'select_role' => 'Seleccionar Rol',
+  'current_password' => 'Contraseña Actual',
+  'new_password' => 'Nueva Contraseña',
+  'confirm_new_password' => 'Confirmar Nueva Contraseña',
+  'password_set' => 'Contraseña Establecida',
+  'password_change_hint' => 'Deje en blanco para mantener la contraseña actual',
+  'leave_blank_to_keep' => 'Dejar en blanco para mantener la contraseña actual',
 );
 

@@ -18,7 +18,15 @@
         </li>
         <?php if(setting('front_end_enable_disable') == 1): ?>
         <li class="dropdown">
-            <a data-toggle="tooltip" data-placement="bottom" title="Go to Frontend" href="<?php echo e(route('/')); ?>" class="nav-link nav-link-lg beep" target="_blank"><i class="fa fa-globe"></i></a>
+            
+            <a data-toggle="tooltip"
+               data-placement="bottom"
+               title="Go to Frontend"
+               href="<?php echo e(route('home')); ?>"
+               class="nav-link nav-link-lg beep"
+               target="_blank">
+                <i class="fa fa-globe"></i>
+            </a>
         </li>
         <?php endif; ?>
         <li class="dropdown">

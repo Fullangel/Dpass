@@ -56,6 +56,11 @@ class VisitingDetails extends Model implements  HasMedia
         return $this->belongsTo(Headquarters::class, 'headquarters_id');
     }
 
+    public function visitDestination()
+    {
+        return $this->belongsTo(VisitDestination::class, 'visit_destination_id');
+    }
+
     public function attendance()
     {
         return $this->hasMany(Attendance::class, 'employee_id');
@@ -63,7 +68,7 @@ class VisitingDetails extends Model implements  HasMedia
 
     public function getMyStatusAttribute()
     {
-        return trans('statuses.' . $this->status);
+        return trans('visitor_statuses.' . $this->status);
     }
 
     public function getImagesAttribute()

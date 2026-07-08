@@ -22,6 +22,7 @@ use App\Models\Visitor;
 use App\Notifications\SendInvitationToVisitors;
 use App\Http\Services\Booking\BookingService;
 use App\Http\Services\Employee\EmployeeService;
+use App\Services\VisitDestinationService;
 use Illuminate\Http\Request;
 use DB;
 use Illuminate\Support\Facades\Notification;
@@ -95,14 +96,18 @@ class EmployeeController extends Controller
             $this->data['supervisor_headquarters_id'] = null;
         }
 
-        // Si es admin, mostrar roles disponibles (excluyendo el rol admin)
-        if (auth()->user()->hasRole('Admin')) {
+        // Si es admin o supervisor, mostrar roles disponibles (excluyendo el rol admin)
+        $canAssignRole = auth()->user()->hasRole('Admin') || auth()->user()->hasRole('supervisor');
+        if ($canAssignRole) {
             $this->data['roles'] = \Spatie\Permission\Models\Role::where('name', '!=', 'Admin')->get();
-            $this->data['is_admin'] = true;
+            $this->data['can_assign_role'] = true;
         } else {
             $this->data['roles'] = collect();
-            $this->data['is_admin'] = false;
+            $this->data['can_assign_role'] = false;
         }
+        $this->data['is_admin'] = auth()->user()->hasRole('Admin');
+        $this->data['visitDestinations'] = app(VisitDestinationService::class)
+            ->destinationsForEmployeeForm($this->data['supervisor_headquarters_id'] ?? null);
 
         return view('admin.employee.create', $this->data);
     }
@@ -117,13 +122,14 @@ class EmployeeController extends Controller
             }
         }
 
-        // Validar que solo el admin pueda asignar roles
-        if (auth()->user()->hasRole('Admin')) {
+        // Validar rol: admin y supervisor pueden asignar rol (excluyendo Admin)
+        if (auth()->user()->hasRole('Admin') || auth()->user()->hasRole('supervisor')) {
+            $adminRoleId = \Spatie\Permission\Models\Role::where('name', 'Admin')->first()->id ?? 0;
             $request->validate([
-                'role_id' => 'required|exists:roles,id|not_in:' . \Spatie\Permission\Models\Role::where('name', 'Admin')->first()->id
+                'role_id' => 'required|exists:roles,id|not_in:' . $adminRoleId
             ]);
         }
-        
+
         $this->employeeService->make($request);
         return redirect()->route('admin.employees.index')->withSuccess('The data inserted successfully!');
     }
@@ -174,33 +180,37 @@ class EmployeeController extends Controller
             $this->data['headquarters'] = Headquarters::all();
         }
 
-        // Si es admin, mostrar roles disponibles (excluyendo el rol admin)
-        if (auth()->user()->hasRole('Admin')) {
+        // Si es admin o supervisor, mostrar roles disponibles (excluyendo el rol admin)
+        $canAssignRole = auth()->user()->hasRole('Admin') || auth()->user()->hasRole('supervisor');
+        if ($canAssignRole) {
             $this->data['roles'] = \Spatie\Permission\Models\Role::where('name', '!=', 'Admin')->get();
-            $this->data['is_admin'] = true;
+            $this->data['can_assign_role'] = true;
             // Obtener el rol actual del empleado
             $employeeRole = $this->data['employee']->user->roles->first();
             $this->data['employee_role_id'] = $employeeRole ? $employeeRole->id : null;
         } else {
             $this->data['roles'] = collect();
-            $this->data['is_admin'] = false;
+            $this->data['can_assign_role'] = false;
         }
+        $this->data['is_admin'] = auth()->user()->hasRole('Admin');
+        $this->data['visitDestinations'] = app(VisitDestinationService::class)
+            ->destinationsForEmployeeForm($this->data['employee']->headquarters_id);
+        $this->data['assignedVisitDestinationIds'] = $this->data['employee']->user
+            ? $this->data['employee']->user->visitDestinations()->pluck('visit_destinations.id')->all()
+            : [];
         
         return view('admin.employee.edit', $this->data);
     }
     public function update(EmployeeUpdateRequest $request, Employee $employee)
     {
-        // Validar que el supervisor solo pueda actualizar empleados en su sede
-        if (auth()->user()->hasRole('supervisor')) {
-            if ($request->headquarters_id != auth()->user()->headquarters_id) {
-                return redirect()->back()->withErrors(['headquarters_id' => 'No tiene permiso para actualizar empleados en esta sede.'])->withInput();
-            }
-        }
+        // El supervisor solo puede editar empleados que pertenecen a su sede (validado por middleware).
+        // Se permite cambiar la sede del empleado (transferencia): el middleware valida el registro actual al acceder a edit/update.
 
-        // Validar que solo el admin pueda actualizar roles
-        if (auth()->user()->hasRole('Admin')) {
+        // Validar rol: admin y supervisor pueden actualizar rol (excluyendo Admin)
+        if (auth()->user()->hasRole('Admin') || auth()->user()->hasRole('supervisor')) {
+            $adminRoleId = \Spatie\Permission\Models\Role::where('name', 'Admin')->first()->id ?? 0;
             $request->validate([
-                'role_id' => 'required|exists:roles,id|not_in:' . \Spatie\Permission\Models\Role::where('name', 'Admin')->first()->id
+                'role_id' => 'required|exists:roles,id|not_in:' . $adminRoleId
             ]);
         }
         
@@ -232,19 +242,91 @@ class EmployeeController extends Controller
 
     public function getEmployees(Request $request)
     {
-        // El servicio ya maneja el filtrado por sede para supervisores
-        $employees = $this->employeeService->all();
+        // Construimos un query Eloquent optimizado y dejamos el paginado/filtrado a DataTables.
+        $user = auth()->user();
 
-        $i            = 1;
-        $employeeArray = [];
-        if (!blank($employees)) {
-            foreach ($employees as $employee) {
-                $employeeArray[$i]          = $employee;
-                $employeeArray[$i]['setID'] = $i;
-                $i++;
+        $query = Employee::query()
+            ->with(['user', 'region', 'headquarters'])
+            ->orderByDesc('id');
+
+        // Filtro por sede para supervisores (equivalente a EmployeeService::all()).
+        if ($user && $user->hasRole('supervisor')) {
+            $supervisorEmployee = Employee::where('user_id', $user->id)->first();
+            if ($supervisorEmployee) {
+                $query->where('headquarters_id', $supervisorEmployee->headquarters_id);
+            } else {
+                $query->whereRaw('1 = 0');
             }
         }
-        return Datatables::of($employeeArray)
+
+        // Si viene un status concreto desde el front, filtrarlo.
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        $likeOperator = DB::connection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+
+        return Datatables::of($query)
+            ->addIndexColumn()
+            ->filterColumn('name', function ($query, $keyword) use ($likeOperator) {
+                $term = '%' . addcslashes((string) $keyword, '%_\\') . '%';
+                $query->where(function ($q) use ($term, $likeOperator) {
+                    $q->where('first_name', $likeOperator, $term)
+                        ->orWhere('last_name', $likeOperator, $term)
+                        ->orWhereHas('user', function ($uq) use ($term, $likeOperator) {
+                            $uq->where('first_name', $likeOperator, $term)
+                                ->orWhere('last_name', $likeOperator, $term);
+                        });
+                });
+            })
+            ->filterColumn('email', function ($query, $keyword) use ($likeOperator) {
+                $term = '%' . addcslashes((string) $keyword, '%_\\') . '%';
+                $query->whereHas('user', function ($q) use ($term, $likeOperator) {
+                    $q->where('email', $likeOperator, $term);
+                });
+            })
+            ->filterColumn('phone', function ($query, $keyword) use ($likeOperator) {
+                $term = '%' . addcslashes((string) $keyword, '%_\\') . '%';
+                $query->where(function ($q) use ($term, $likeOperator) {
+                    $q->where('phone', $likeOperator, $term)
+                        ->orWhereHas('user', function ($uq) use ($term, $likeOperator) {
+                            $uq->where('phone', $likeOperator, $term);
+                        });
+                });
+            })
+            ->filterColumn('region', function ($query, $keyword) use ($likeOperator) {
+                $term = '%' . addcslashes((string) $keyword, '%_\\') . '%';
+                $query->whereHas('region', function ($q) use ($term, $likeOperator) {
+                    $q->where('name', $likeOperator, $term);
+                });
+            })
+            ->filterColumn('headquarters', function ($query, $keyword) use ($likeOperator) {
+                $term = '%' . addcslashes((string) $keyword, '%_\\') . '%';
+                $query->whereHas('headquarters', function ($q) use ($term, $likeOperator) {
+                    $q->where('name', $likeOperator, $term);
+                });
+            })
+            ->filterColumn('date_of_joining', function ($query, $keyword) use ($likeOperator) {
+                $term = '%' . addcslashes((string) $keyword, '%_\\') . '%';
+                $query->where('date_of_joining', $likeOperator, $term);
+            })
+            ->filterColumn('status', function ($query, $keyword) use ($likeOperator) {
+                $term = mb_strtolower(trim((string) $keyword), 'UTF-8');
+
+                if ($term !== '') {
+                    if (str_contains($term, 'act')) {
+                        $query->where('status', Status::ACTIVE);
+                        return;
+                    }
+                    if (str_contains($term, 'inact')) {
+                        $query->where('status', Status::INACTIVE);
+                        return;
+                    }
+                }
+
+                $search = '%' . addcslashes((string) $keyword, '%_\\') . '%';
+                $query->whereRaw('CAST(status AS TEXT) ' . $likeOperator . ' ?', [$search]);
+            })
             ->addColumn('action', function ($employee) {
                 $retAction = '';
 
@@ -287,8 +369,10 @@ class EmployeeController extends Controller
                 return $employee->date_of_joining;
             })
             ->editColumn('id', function ($employee) {
-                return $employee->setID;
+                // Usamos el índice generado por DataTables (o el id real si prefieres).
+                return $employee->id;
             })
+            ->blacklist(['image', 'action'])
             ->rawColumns(['name', 'action'])
             ->escapeColumns([])
             ->make(true);

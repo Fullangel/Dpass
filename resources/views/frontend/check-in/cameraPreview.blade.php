@@ -42,8 +42,8 @@
 @push('js')
 
 {{-- For Qrcode Scan --}}
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/3.3.3/adapter.min.js"></script>
-<script type="text/javascript" src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+<script type="text/javascript" src="{{ asset('vendor/offline-libs/adapter.min.js') }}"></script>
+<script type="text/javascript" src="{{ asset('vendor/offline-libs/instascan.min.js') }}"></script>
 <script>
     $(document).ready(function() {
         let scanner = new Instascan.Scanner({video: document.getElementById('preview')});

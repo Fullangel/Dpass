@@ -117,6 +117,12 @@ class User extends Authenticatable implements JWTSubject, HasMedia
         return $this->hasOne(Employee::class);
     }
 
+    public function visitDestinations()
+    {
+        return $this->belongsToMany(VisitDestination::class, 'user_visit_destinations')
+            ->withTimestamps();
+    }
+
     public function getMyStatusAttribute()
     {
         return trans('statuses.' . $this->status);

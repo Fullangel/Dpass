@@ -17,9 +17,14 @@
 <!-- Template JS File -->
 <script src="<?php echo e(asset('assets/js/scripts.js')); ?>"></script>
 <script src="<?php echo e(asset('js/custom.js')); ?>"></script>
-<script src="https://www.gstatic.com/firebasejs/8.3.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.3.2/firebase-messaging.js"></script>
-
+<?php
+    $fcmProjectId = trim((string) setting('projectId'));
+    $fcmEnabled = $fcmProjectId !== '';
+?>
+<?php if($fcmEnabled): ?>
+<script src="<?php echo e(asset('vendor/offline-libs/firebase-app.js')); ?>"></script>
+<script src="<?php echo e(asset('vendor/offline-libs/firebase-messaging.js')); ?>"></script>
+<?php endif; ?>
 
 <script type="text/javascript">
     var beep = document.getElementById("myAudio1");
@@ -33,67 +38,61 @@
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
         });
-         
-        // web_token
-        var firebaseConfig = {
-            apiKey: "<?php echo e(setting('apiKey')); ?>",
-            authDomain: "<?php echo e(setting('authDomain')); ?>",
-            projectId: "<?php echo e(setting('projectId')); ?>",
-            storageBucket: "<?php echo e(setting('storageBucket')); ?>",
-            messagingSenderId: "<?php echo e(setting('messagingSenderId')); ?>",
-            appId: "<?php echo e(setting('appId')); ?>",
-            measurementId: "<?php echo e(setting('measurementId')); ?>"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const messaging = firebase.messaging();
 
-        startFCM();
-            $.ajax({
-                    url: "https://entrada.pro/public/api/v1/me"
-            }).then(function(data) {
-                console.log(data)
-             });
-        function startFCM() {
-            messaging.requestPermission()
-                .then(function() {
-                    return messaging.getToken()
-                })
-                .then(function(response) {
-                    $.ajax({
-                        url: '<?php echo e(route("admin.store.token")); ?>',
-                        type: 'POST',
-                        data: {
-                            token: response
-                        },
-                        dataType: 'JSON',
-                        success: function(response) {
-
-                        },
-                        error: function(error) {
-
-                        },
-                    });
-                }).catch(function(error) {
-
-                });
-        }
-        messaging.onMessage(function(payload) {
-            const title = payload.notification.title;
-            const options = {
-                body: payload.notification.body,
-                icon: payload.notification.icon,
+        <?php if($fcmEnabled): ?>
+        (function () {
+            var firebaseConfig = {
+                apiKey: <?php echo json_encode(setting('apiKey'), 15, 512) ?>,
+                authDomain: <?php echo json_encode(setting('authDomain'), 15, 512) ?>,
+                projectId: <?php echo json_encode($fcmProjectId, 15, 512) ?>,
+                storageBucket: <?php echo json_encode(setting('storageBucket'), 15, 512) ?>,
+                messagingSenderId: <?php echo json_encode(setting('messagingSenderId'), 15, 512) ?>,
+                appId: <?php echo json_encode(setting('appId'), 15, 512) ?>,
+                measurementId: <?php echo json_encode(setting('measurementId'), 15, 512) ?>
             };
+            firebase.initializeApp(firebaseConfig);
+            var messaging = firebase.messaging();
 
-            sound();
-            window.location.reload();
-            new Notification(title, options);
-        });
+            function startFCM() {
+                messaging.requestPermission()
+                    .then(function () {
+                        return messaging.getToken();
+                    })
+                    .then(function (token) {
+                        if (!token) {
+                            return;
+                        }
+                        $.ajax({
+                            url: '<?php echo e(route("admin.store.token")); ?>',
+                            type: 'POST',
+                            data: { token: token },
+                            dataType: 'JSON'
+                        });
+                    })
+                    .catch(function () {});
+            }
+
+            startFCM();
+
+            messaging.onMessage(function (payload) {
+                var title = (payload.notification && payload.notification.title) ? payload.notification.title : '';
+                var options = {
+                    body: payload.notification ? payload.notification.body : '',
+                    icon: payload.notification ? payload.notification.icon : ''
+                };
+                sound();
+                window.location.reload();
+                if (title && window.Notification && Notification.permission === 'granted') {
+                    new Notification(title, options);
+                }
+            });
+        })();
+        <?php endif; ?>
 
         <?php if(session('success')): ?>
         iziToast.success({
             title: 'Success',
-            message: '<?php echo e(session('
-            success ')); ?>',
+            message: <?php echo json_encode(session('success'), 15, 512) ?>,
             position: 'topRight'
         });
         <?php endif; ?>
@@ -101,8 +100,7 @@
         <?php if(session('error')): ?>
         iziToast.error({
             title: 'Error',
-            message: '<?php echo e(session('
-            error ')); ?>',
+            message: <?php echo json_encode(session('error'), 15, 512) ?>,
             position: 'topRight'
         });
         <?php endif; ?>

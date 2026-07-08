@@ -7,7 +7,7 @@
         <div class="card" style="margin-top:40px;">
             <div class="card-body">
                 <div style="margin: auto;">
-                    {!! Form::open(['route' => 'checkout.index', 'id' => 'myForm']) !!}
+                    {!! Form::open(['route' => 'checkout.getVisitor', 'method' => 'POST', 'id' => 'myForm']) !!}
                     <div class="save">
                         <div class="row">
                             <div class="col-md-4 col-sm-12 left-side">

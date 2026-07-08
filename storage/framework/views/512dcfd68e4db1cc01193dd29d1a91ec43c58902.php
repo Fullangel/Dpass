@@ -95,11 +95,11 @@
                                     <span>Registrar Visitante</span>
                                 </a>
                             </div>
-                            <div class="ei-banner-btn ml-2">
+                            <!-- <div class="ei-banner-btn ml-2">
                                 <a href="<?php echo e(route('checkout.index')); ?>">
                                     <span>Registrar Salida</span>
                                 </a>
-                            </div>
+                            </div> -->
                         </div>
                     </div>
                     <div class="pm-banenr-img position-absolute d-flex justify-content-end">
